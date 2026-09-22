@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-16">
+<link rel="stylesheet" href="style.css?v=2026.09.22-17">
 </head>
 <body>
 <header class="topbar">
@@ -207,11 +207,11 @@
 <div id="seccion-contabilidad" class="seccion-pagina" hidden>
   <div class="contab-head">
     <h2>🧮 Contabilización</h2>
-    <button type="button" id="btn-ver-puc" class="btn btn-secundario btn-contabilidad">📚 Ver PUC</button>
   </div>
   <div class="contab-subtabs">
     <button type="button" class="contab-subtab activa" data-subtab="factura">Por factura</button>
     <button type="button" class="contab-subtab" data-subtab="todo">Todo (hoja completa)</button>
+    <button type="button" id="btn-ver-puc" class="contab-subtab-puc">📚 Ver PUC ↗</button>
   </div>
 
   <div id="contab-vista-factura">
@@ -220,7 +220,10 @@
       Mostrando: <b id="contab-filtro-activo-texto"></b>
       <button type="button" id="btn-quitar-filtro-activo" class="btn btn-secundario">Ver todas</button>
     </div>
-    <input id="contab-buscar" type="search" placeholder="Buscar por proveedor, NIT o número de factura...">
+    <div class="contab-todo-filtros">
+      <label>Mes <select id="contab-mes"></select></label>
+      <input id="contab-buscar" type="search" placeholder="Buscar dentro del mes...">
+    </div>
     <div id="contab-lista" class="contab-lista"></div>
     <div id="contab-paginacion" class="contab-paginacion" hidden></div>
   </div>
@@ -596,6 +599,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-16"></script>
+<script src="app.js?v=2026.09.22-17"></script>
 </body>
 </html>

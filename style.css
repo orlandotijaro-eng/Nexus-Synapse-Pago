@@ -448,6 +448,8 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .contab-subtabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
 .contab-subtab { padding: 8px 14px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.84rem; cursor: pointer; }
 .contab-subtab.activa { color: var(--contab); border-bottom-color: var(--contab); }
+.contab-subtab-puc { margin-left: auto; padding: 6px 14px; border: 1px solid var(--contab); border-radius: 999px; background: var(--contab-bg); color: var(--contab); font-weight: 700; font-size: 0.82rem; cursor: pointer; align-self: center; }
+.contab-subtab-puc:hover { background: var(--contab); color: #fff; }
 
 .contab-todo-filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .contab-todo-filtros label { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; color: var(--text); }
