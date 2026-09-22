@@ -143,6 +143,7 @@ const el = {
   contabSelectTodas: document.getElementById('contab-select-todas'),
   btnAplicarTodasCodigo: document.getElementById('btn-aplicar-todas-codigo'),
   contabLineasBody: document.getElementById('contab-lineas-body'),
+  contabResumenIvaWrap: document.getElementById('contab-resumen-iva-wrap'),
   contabGuardarMensaje: document.getElementById('contab-guardar-mensaje'),
   btnGuardarCodigos: document.getElementById('btn-guardar-codigos'),
 
@@ -166,6 +167,44 @@ function claseMetodo(metodo) {
 function formatoMoneda2(valor) {
   const n = Number(valor) || 0;
   return n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Agrupa las líneas de una factura contabilizada por tarifa de IVA (la que trajo
+// el XML por línea) y calcula, para cada tarifa, la base gravada y el valor de IVA
+// que le corresponde, más el subtotal y el total de toda la factura.
+function resumenIvaFactura(lineas) {
+  const grupos = new Map();
+  let subtotal = 0;
+  for (const l of lineas || []) {
+    const base = (Number(l.cantidad) || 0) * (Number(l.valorUnitario) || 0);
+    const pct = Number(l.ivaPct) || 0;
+    subtotal += base;
+    if (!grupos.has(pct)) grupos.set(pct, { pct, base: 0, iva: 0 });
+    const g = grupos.get(pct);
+    g.base += base;
+    g.iva += base * pct;
+  }
+  const filas = [...grupos.values()].sort((a, b) => b.pct - a.pct);
+  const totalIva = filas.reduce((s, f) => s + f.iva, 0);
+  return { subtotal, filas, totalIva, total: subtotal + totalIva };
+}
+
+function resumenIvaHtml(lineas) {
+  const r = resumenIvaFactura(lineas);
+  if (!r.filas.length) return '';
+  const filasHtml = r.filas.map((f) => {
+    const etiqueta = f.pct > 0 ? `IVA ${Math.round(f.pct * 10000) / 100}%` : 'Sin IVA / exento';
+    return `<tr><th>${escapeHtml(etiqueta)}<small>Base ${formatoMoneda2(f.base)}</small></th><td class="num">${formatoMoneda2(f.iva)}</td></tr>`;
+  }).join('');
+  return `
+    <table class="contab-resumen-iva">
+      <tbody>
+        <tr class="cri-subtotal"><th>Subtotal</th><td class="num">${formatoMoneda2(r.subtotal)}</td></tr>
+        ${filasHtml}
+        <tr class="cri-total"><th>Total</th><td class="num">${formatoMoneda2(r.total)}</td></tr>
+      </tbody>
+    </table>
+  `;
 }
 const ORDINALES = ['1er', '2do', '3er', '4to', '5to', '6to', '7mo', '8vo', '9no', '10mo'];
 function filasPagosHtml(f, pagos, neto) {
@@ -1233,11 +1272,12 @@ function renderContabilidad() {
           <button type="button" class="btn btn-secundario gcontab-aplicar-todas">Aplicar a todas</button>
         </div>
         <table class="contab-lineas">
-          <thead><tr><th>Código PUC</th><th>Descripción</th><th class="num">Cant.</th><th class="num">Valor unit.</th></tr></thead>
+          <thead><tr><th>Código PUC</th><th>Descripción</th><th class="num">Cant.</th><th class="num">Valor unit.</th><th class="num">IVA %</th></tr></thead>
           <tbody>
-            ${(f.lineas || []).map((l) => `<tr><td><select class="gcontab-select-codigo" data-row-number="${escapeHtml(String(l.rowNumber || ''))}">${opcionesPuc(l.codigoInventario)}</select></td><td>${escapeHtml(l.descripcion || '')}</td><td class="num">${escapeHtml(String(l.cantidad ?? ''))}</td><td class="num">${formatoMoneda2(l.valorUnitario)}</td></tr>`).join('')}
+            ${(f.lineas || []).map((l) => `<tr><td><select class="gcontab-select-codigo" data-row-number="${escapeHtml(String(l.rowNumber || ''))}">${opcionesPuc(l.codigoInventario)}</select></td><td>${escapeHtml(l.descripcion || '')}</td><td class="num">${escapeHtml(String(l.cantidad ?? ''))}</td><td class="num">${formatoMoneda2(l.valorUnitario)}</td><td class="num">${l.ivaPct !== '' && l.ivaPct !== undefined && l.ivaPct !== null ? `${Math.round((Number(l.ivaPct) || 0) * 10000) / 100}%` : '—'}</td></tr>`).join('')}
           </tbody>
         </table>
+        ${resumenIvaHtml(f.lineas)}
         <div class="contab-guardar-linea">
           <button type="button" class="btn btn-primary gcontab-guardar">💾 Guardar cambios</button>
           <span class="form-mensaje gcontab-mensaje"></span>
@@ -1634,9 +1674,11 @@ function renderContabLineasEditable(data) {
       <td>${escapeHtml(l.descripcion || '')}</td>
       <td class="num">${escapeHtml(String(l.cantidad ?? ''))}</td>
       <td class="num">${formatoMoneda2(l.valorUnitario)}</td>
+      <td class="num">${l.ivaPct !== '' && l.ivaPct !== undefined && l.ivaPct !== null ? `${Math.round((Number(l.ivaPct) || 0) * 10000) / 100}%` : '—'}</td>
       <td><select class="contab-select-codigo" data-row-number="${escapeHtml(String(l.rowNumber))}">${opcionesPuc(l.codigoInventario)}</select></td>
     </tr>
   `).join('');
+  el.contabResumenIvaWrap.innerHTML = resumenIvaHtml(data.lineas);
   el.contabGuardarMensaje.textContent = '';
   el.contabGuardarMensaje.className = 'form-mensaje';
 }

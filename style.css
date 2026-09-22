@@ -415,6 +415,15 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .contab-lineas td { padding: 6px 10px; border-top: 1px solid var(--border); }
 .contab-lineas td.num { text-align: right; white-space: nowrap; }
 .contab-lineas td.codigo { font-weight: 700; color: var(--contab); white-space: nowrap; }
+.contab-resumen-iva { width: 100%; max-width: 320px; margin: 10px 0 10px auto; border-collapse: collapse; font-size: 0.82rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.contab-resumen-iva th { text-align: left; padding: 6px 10px; font-weight: 700; }
+.contab-resumen-iva th small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.7rem; }
+.contab-resumen-iva td { padding: 6px 10px; text-align: right; font-weight: 700; }
+.contab-resumen-iva tr { border-top: 1px solid var(--border); }
+.contab-resumen-iva tr:first-child { border-top: 0; }
+.contab-resumen-iva .cri-subtotal { background: var(--header-bg); }
+.contab-resumen-iva .cri-total { background: var(--contab-bg); }
+.contab-resumen-iva .cri-total th, .contab-resumen-iva .cri-total td { color: var(--contab); font-size: 0.9rem; }
 
 .contab-factura-estado { text-align: center; padding: 24px 12px; color: var(--text-muted); }
 .contab-factura-estado p { margin: 0 0 10px; }
