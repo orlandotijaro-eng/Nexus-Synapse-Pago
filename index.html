@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-4">
+<link rel="stylesheet" href="style.css?v=2026.09.22-5">
 </head>
 <body>
 <header class="topbar">
@@ -213,8 +213,17 @@
       <button type="button" id="btn-cerrar-contabilidad" class="btn btn-secundario">✕ Cerrar</button>
     </div>
     <p id="contab-resumen" class="contab-resumen">Cargando...</p>
+    <div id="contab-filtro-activo" class="contab-filtro-activo" hidden>
+      Mostrando: <b id="contab-filtro-activo-texto"></b>
+      <button type="button" id="btn-quitar-filtro-activo" class="btn btn-secundario">Ver todas</button>
+    </div>
     <input id="contab-buscar" type="search" placeholder="Buscar por proveedor, NIT o número de factura...">
     <div id="contab-lista" class="contab-lista"></div>
+    <div id="contab-paginacion" class="contab-paginacion" hidden>
+      <button type="button" id="btn-contab-pag-anterior" class="btn btn-secundario">‹ Anterior</button>
+      <span id="contab-pag-texto"></span>
+      <button type="button" id="btn-contab-pag-siguiente" class="btn btn-secundario">Siguiente ›</button>
+    </div>
   </div>
 </div>
 
@@ -529,6 +538,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-4"></script>
+<script src="app.js?v=2026.09.22-5"></script>
 </body>
 </html>

@@ -20,7 +20,8 @@ const METODOS_PAGO = ['Crédito', 'Efectivo', 'Banco Av Villas', 'Banco Davivien
 const METODO_LABELS = { NEQUI_LE: 'Nequi (L.E)' };
 function labelMetodo(m) { return METODO_LABELS[m] || m; }
 
-const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null };
+const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1 };
+const CONTAB_POR_PAGINA = 25;
 
 const el = {
   tabla: document.getElementById('tabla-facturas'),
@@ -71,6 +72,13 @@ const el = {
   contabResumen: document.getElementById('contab-resumen'),
   contabBuscar: document.getElementById('contab-buscar'),
   contabLista: document.getElementById('contab-lista'),
+  contabFiltroActivo: document.getElementById('contab-filtro-activo'),
+  contabFiltroActivoTexto: document.getElementById('contab-filtro-activo-texto'),
+  btnQuitarFiltroActivo: document.getElementById('btn-quitar-filtro-activo'),
+  contabPaginacion: document.getElementById('contab-paginacion'),
+  contabPagTexto: document.getElementById('contab-pag-texto'),
+  btnContabPagAnterior: document.getElementById('btn-contab-pag-anterior'),
+  btnContabPagSiguiente: document.getElementById('btn-contab-pag-siguiente'),
 
   detalleVacio: document.getElementById('detalle-vacio'),
   panelDetalle: document.getElementById('panel-detalle'),
@@ -1166,20 +1174,45 @@ async function cargarContabilidad() {
 
 function renderContabilidad() {
   const texto = (el.contabBuscar.value || '').toLowerCase().trim();
-  const items = state.contabilidad.filter((f) => {
-    if (!texto) return true;
-    return `${f.tercero || ''} ${f.nit || ''} ${f.numero || ''} ${f.prefijo || ''} ${f.cufe || ''}`.toLowerCase().includes(texto);
-  });
+
+  // El filtro por selección activa solo aplica mientras no haya una búsqueda manual escrita.
+  const usandoFiltroActivo = !texto && !!state.contabFiltroActivoCufe;
+  el.contabFiltroActivo.hidden = !usandoFiltroActivo;
+
+  let items;
+  if (usandoFiltroActivo) {
+    items = state.contabilidad.filter((f) => f.cufe === state.contabFiltroActivoCufe);
+  } else if (texto) {
+    items = state.contabilidad.filter((f) => `${f.tercero || ''} ${f.nit || ''} ${f.numero || ''} ${f.prefijo || ''} ${f.cufe || ''}`.toLowerCase().includes(texto));
+  } else {
+    items = state.contabilidad;
+  }
+
   const totalLineas = state.contabilidad.reduce((acc, f) => acc + (f.lineas ? f.lineas.length : 0), 0);
-  el.contabResumen.textContent = `${state.contabilidad.length} factura${state.contabilidad.length === 1 ? '' : 's'} contabilizada${state.contabilidad.length === 1 ? '' : 's'} · ${totalLineas} línea${totalLineas === 1 ? '' : 's'}${texto ? ` · mostrando ${items.length}` : ''}`;
+  el.contabResumen.textContent = `${state.contabilidad.length} factura${state.contabilidad.length === 1 ? '' : 's'} contabilizada${state.contabilidad.length === 1 ? '' : 's'} · ${totalLineas} línea${totalLineas === 1 ? '' : 's'}${(texto || usandoFiltroActivo) ? ` · mostrando ${items.length}` : ''}`;
 
   if (!items.length) {
-    el.contabLista.innerHTML = `<div class="contab-vacio">${texto ? 'Ninguna factura contabilizada coincide con la búsqueda.' : 'Todavía no hay facturas contabilizadas. A medida que Pagos y el correo vayan procesando documentos, irán apareciendo aquí.'}</div>`;
+    let mensajeVacio = 'Todavía no hay facturas contabilizadas. A medida que Pagos y el correo vayan procesando documentos, irán apareciendo aquí.';
+    if (usandoFiltroActivo) mensajeVacio = 'La factura seleccionada todavía no está contabilizada. Ábrela y usa "Contabilizar ahora" en su pestaña de Contabilidad.';
+    else if (texto) mensajeVacio = 'Ninguna factura contabilizada coincide con la búsqueda.';
+    el.contabLista.innerHTML = `<div class="contab-vacio">${mensajeVacio}</div>`;
+    el.contabPaginacion.hidden = true;
     return;
   }
 
-  el.contabLista.innerHTML = items.map((f) => `
-    <div class="contab-factura">
+  const totalPaginas = Math.max(1, Math.ceil(items.length / CONTAB_POR_PAGINA));
+  if (state.contabPagina > totalPaginas) state.contabPagina = totalPaginas;
+  if (state.contabPagina < 1) state.contabPagina = 1;
+  const inicio = (state.contabPagina - 1) * CONTAB_POR_PAGINA;
+  const itemsPagina = items.slice(inicio, inicio + CONTAB_POR_PAGINA);
+
+  el.contabPaginacion.hidden = totalPaginas <= 1;
+  el.contabPagTexto.textContent = `Página ${state.contabPagina} de ${totalPaginas}`;
+  el.btnContabPagAnterior.disabled = state.contabPagina <= 1;
+  el.btnContabPagSiguiente.disabled = state.contabPagina >= totalPaginas;
+
+  el.contabLista.innerHTML = itemsPagina.map((f) => `
+    <div class="contab-factura${itemsPagina.length === 1 ? ' abierta' : ''}">
       <div class="contab-factura-head">
         <span class="cf-doc">${escapeHtml(f.prefijo || '')}${escapeHtml(String(f.numero || ''))}</span>
         <span class="cf-tercero">${escapeHtml(f.tercero || 'Sin nombre')} · NIT ${escapeHtml(String(f.nit || ''))}</span>
@@ -1205,6 +1238,16 @@ function renderContabilidad() {
 function abrirModalContabilidad() {
   el.modalContabilidad.hidden = false;
   el.contabBuscar.value = '';
+  state.contabPagina = 1;
+
+  const activa = state.itemActivo != null ? state.facturas.find((f) => String(f.item) === String(state.itemActivo)) : null;
+  if (activa && activa.cufe) {
+    state.contabFiltroActivoCufe = activa.cufe;
+    el.contabFiltroActivoTexto.textContent = `#${activa.item} · ${activa.vendedorNombre || 'Sin nombre'} · Fact. ${activa.nroFactura || ''}`;
+  } else {
+    state.contabFiltroActivoCufe = null;
+  }
+
   cargarContabilidad();
 }
 function cerrarModalContabilidad() {
@@ -1212,7 +1255,14 @@ function cerrarModalContabilidad() {
 }
 el.btnVerContabilidad.addEventListener('click', abrirModalContabilidad);
 el.btnCerrarContabilidad.addEventListener('click', cerrarModalContabilidad);
-el.contabBuscar.addEventListener('input', renderContabilidad);
+el.contabBuscar.addEventListener('input', () => { state.contabPagina = 1; renderContabilidad(); });
+el.btnQuitarFiltroActivo.addEventListener('click', () => {
+  state.contabFiltroActivoCufe = null;
+  state.contabPagina = 1;
+  renderContabilidad();
+});
+el.btnContabPagAnterior.addEventListener('click', () => { state.contabPagina -= 1; renderContabilidad(); });
+el.btnContabPagSiguiente.addEventListener('click', () => { state.contabPagina += 1; renderContabilidad(); });
 
 async function cargarPucCatalogoSiHaceFalta() {
   if (state.pucCatalogo) return state.pucCatalogo;
