@@ -76,9 +76,6 @@ const el = {
   contabFiltroActivoTexto: document.getElementById('contab-filtro-activo-texto'),
   btnQuitarFiltroActivo: document.getElementById('btn-quitar-filtro-activo'),
   contabPaginacion: document.getElementById('contab-paginacion'),
-  contabPagTexto: document.getElementById('contab-pag-texto'),
-  btnContabPagAnterior: document.getElementById('btn-contab-pag-anterior'),
-  btnContabPagSiguiente: document.getElementById('btn-contab-pag-siguiente'),
 
   detalleVacio: document.getElementById('detalle-vacio'),
   panelDetalle: document.getElementById('panel-detalle'),
@@ -1206,13 +1203,10 @@ function renderContabilidad() {
   const inicio = (state.contabPagina - 1) * CONTAB_POR_PAGINA;
   const itemsPagina = items.slice(inicio, inicio + CONTAB_POR_PAGINA);
 
-  el.contabPaginacion.hidden = totalPaginas <= 1;
-  el.contabPagTexto.textContent = `Página ${state.contabPagina} de ${totalPaginas}`;
-  el.btnContabPagAnterior.disabled = state.contabPagina <= 1;
-  el.btnContabPagSiguiente.disabled = state.contabPagina >= totalPaginas;
+  renderPaginacionContab(totalPaginas);
 
   el.contabLista.innerHTML = itemsPagina.map((f) => `
-    <div class="contab-factura${itemsPagina.length === 1 ? ' abierta' : ''}">
+    <div class="contab-factura${itemsPagina.length === 1 ? ' abierta' : ''}" data-cufe="${escapeHtml(f.cufe || '')}">
       <div class="contab-factura-head">
         <span class="cf-doc">${escapeHtml(f.prefijo || '')}${escapeHtml(String(f.numero || ''))}</span>
         <span class="cf-tercero">${escapeHtml(f.tercero || 'Sin nombre')} · NIT ${escapeHtml(String(f.nit || ''))}</span>
@@ -1220,12 +1214,20 @@ function renderContabilidad() {
         <span class="cf-flecha">›</span>
       </div>
       <div class="contab-lineas-wrap">
+        <div class="contab-aplicar-todas-mini">
+          <select class="gcontab-select-todas">${opcionesPuc('')}</select>
+          <button type="button" class="btn btn-secundario gcontab-aplicar-todas">Aplicar a todas</button>
+        </div>
         <table class="contab-lineas">
           <thead><tr><th>Código PUC</th><th>Descripción</th><th class="num">Cant.</th><th class="num">Valor unit.</th></tr></thead>
           <tbody>
-            ${(f.lineas || []).map((l) => `<tr><td class="codigo">${escapeHtml(l.codigoInventario || '')}</td><td>${escapeHtml(l.descripcion || '')}</td><td class="num">${escapeHtml(String(l.cantidad ?? ''))}</td><td class="num">${formatoMoneda2(l.valorUnitario)}</td></tr>`).join('')}
+            ${(f.lineas || []).map((l) => `<tr><td><select class="gcontab-select-codigo" data-row-number="${escapeHtml(String(l.rowNumber || ''))}">${opcionesPuc(l.codigoInventario)}</select></td><td>${escapeHtml(l.descripcion || '')}</td><td class="num">${escapeHtml(String(l.cantidad ?? ''))}</td><td class="num">${formatoMoneda2(l.valorUnitario)}</td></tr>`).join('')}
           </tbody>
         </table>
+        <div class="contab-guardar-linea">
+          <button type="button" class="btn btn-primary gcontab-guardar">💾 Guardar cambios</button>
+          <span class="form-mensaje gcontab-mensaje"></span>
+        </div>
       </div>
     </div>
   `).join('');
@@ -1233,9 +1235,98 @@ function renderContabilidad() {
   el.contabLista.querySelectorAll('.contab-factura-head').forEach((head) => {
     head.addEventListener('click', () => head.closest('.contab-factura').classList.toggle('abierta'));
   });
+
+  el.contabLista.querySelectorAll('.gcontab-aplicar-todas').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.contab-factura');
+      const codigo = card.querySelector('.gcontab-select-todas').value;
+      if (!codigo) return;
+      card.querySelectorAll('.gcontab-select-codigo').forEach((sel) => {
+        sel.value = codigo;
+        sel.classList.add('cambiado');
+      });
+    });
+  });
+
+  el.contabLista.querySelectorAll('.gcontab-guardar').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const card = btn.closest('.contab-factura');
+      const cufe = card.dataset.cufe;
+      const mensaje = card.querySelector('.gcontab-mensaje');
+      const lineasCambio = [...card.querySelectorAll('.gcontab-select-codigo')]
+        .map((sel) => ({ rowNumber: sel.dataset.rowNumber, codigo: sel.value }))
+        .filter((l) => l.codigo);
+      if (!lineasCambio.length) {
+        mensaje.textContent = 'Selecciona al menos un código.';
+        mensaje.className = 'form-mensaje error';
+        return;
+      }
+      mensaje.textContent = 'Guardando...';
+      mensaje.className = 'form-mensaje';
+      btn.disabled = true;
+      try {
+        const res = await fetch(URL_CORREGIR_CODIGO, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cufe, lineas: lineasCambio }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) throw new Error(data.mensaje || 'No se pudo guardar.');
+        mensaje.textContent = 'Guardado correctamente.';
+        mensaje.className = 'form-mensaje ok';
+        const factura = state.contabilidad.find((x) => x.cufe === cufe);
+        if (factura) {
+          for (const cambio of lineasCambio) {
+            const linea = (factura.lineas || []).find((x) => String(x.rowNumber) === String(cambio.rowNumber));
+            if (linea) linea.codigoInventario = cambio.codigo;
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        mensaje.textContent = err.message || 'Error de conexión.';
+        mensaje.className = 'form-mensaje error';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
 }
 
-function abrirModalContabilidad() {
+function paginasVisibles(total, actual) {
+  const set = new Set([1, total, actual, actual - 1, actual + 1, actual - 2, actual + 2]);
+  const nums = [...set].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
+  const out = [];
+  let prev = 0;
+  for (const n of nums) {
+    if (prev && n - prev > 1) out.push('…');
+    out.push(n);
+    prev = n;
+  }
+  return out;
+}
+
+function renderPaginacionContab(totalPaginas) {
+  el.contabPaginacion.hidden = totalPaginas <= 1;
+  if (totalPaginas <= 1) { el.contabPaginacion.innerHTML = ''; return; }
+  const paginas = paginasVisibles(totalPaginas, state.contabPagina);
+  el.contabPaginacion.innerHTML = `
+    <button type="button" class="contab-pag-btn" data-pagina="${state.contabPagina - 1}" ${state.contabPagina <= 1 ? 'disabled' : ''}>‹</button>
+    ${paginas.map((p) => p === '…'
+      ? '<span class="contab-pag-puntos">…</span>'
+      : `<button type="button" class="contab-pag-btn${p === state.contabPagina ? ' activa' : ''}" data-pagina="${p}">${p}</button>`
+    ).join('')}
+    <button type="button" class="contab-pag-btn" data-pagina="${state.contabPagina + 1}" ${state.contabPagina >= totalPaginas ? 'disabled' : ''}>›</button>
+  `;
+  el.contabPaginacion.querySelectorAll('.contab-pag-btn:not(:disabled)').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.contabPagina = Number(btn.dataset.pagina);
+      renderContabilidad();
+      el.contabLista.scrollIntoView({ block: 'nearest' });
+    });
+  });
+}
+
+async function abrirModalContabilidad() {
   el.modalContabilidad.hidden = false;
   el.contabBuscar.value = '';
   state.contabPagina = 1;
@@ -1248,7 +1339,8 @@ function abrirModalContabilidad() {
     state.contabFiltroActivoCufe = null;
   }
 
-  cargarContabilidad();
+  await cargarPucCatalogoSiHaceFalta();
+  await cargarContabilidad();
 }
 function cerrarModalContabilidad() {
   el.modalContabilidad.hidden = true;
@@ -1261,8 +1353,6 @@ el.btnQuitarFiltroActivo.addEventListener('click', () => {
   state.contabPagina = 1;
   renderContabilidad();
 });
-el.btnContabPagAnterior.addEventListener('click', () => { state.contabPagina -= 1; renderContabilidad(); });
-el.btnContabPagSiguiente.addEventListener('click', () => { state.contabPagina += 1; renderContabilidad(); });
 
 async function cargarPucCatalogoSiHaceFalta() {
   if (state.pucCatalogo) return state.pucCatalogo;

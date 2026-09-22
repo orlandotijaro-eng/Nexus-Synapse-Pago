@@ -356,9 +356,18 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .contab-filtro-activo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--contab-bg); border: 1px solid var(--contab); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 0.82rem; }
 .contab-filtro-activo b { color: var(--contab); }
 .contab-filtro-activo .btn { padding: 4px 10px; font-size: 0.76rem; margin-left: auto; }
-.contab-paginacion { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 14px; font-size: 0.82rem; color: var(--text-muted); }
-.contab-paginacion .btn { padding: 6px 12px; font-size: 0.8rem; }
-.contab-paginacion .btn:disabled { opacity: 0.4; cursor: default; }
+.contab-paginacion { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.contab-pag-btn { min-width: 30px; height: 30px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); color: var(--text); font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.contab-pag-btn:hover { border-color: var(--contab); }
+.contab-pag-btn.activa { background: var(--contab); border-color: var(--contab); color: #fff; }
+.contab-pag-btn:disabled { opacity: 0.35; cursor: default; }
+.contab-pag-puntos { padding: 0 2px; color: var(--text-muted); }
+
+.contab-aplicar-todas-mini { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px; margin-bottom: 8px; background: var(--contab-bg); border-radius: 6px; }
+.contab-aplicar-todas-mini select { flex: 1; min-width: 160px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.78rem; background: var(--card-bg); color: var(--text); }
+.contab-aplicar-todas-mini .btn { padding: 5px 10px; font-size: 0.76rem; }
+.contab-guardar-linea { display: flex; align-items: center; gap: 10px; padding: 8px; }
+.contab-guardar-linea .form-mensaje { font-size: 0.76rem; }
 .contab-lista { display: flex; flex-direction: column; gap: 10px; }
 .contab-vacio { text-align: center; padding: 36px 12px; color: var(--text-muted); }
 .contab-factura { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
