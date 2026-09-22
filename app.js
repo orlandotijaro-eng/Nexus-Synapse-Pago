@@ -1050,14 +1050,46 @@ el.btnLoteCancelar.addEventListener('click', () => {
   if (control.abortController) control.abortController.abort();
 });
 
-// Cada documento dispara su propia contabilización en el servidor, que tarda
-// ~90s (1.5 min) internamente. Si se sueltan muchos documentos seguidos, esas
-// contabilizaciones se amontonan y saturan la cuota de Sheets/el motor de IA
-// (confirmado: con 168 de golpe, la mayoría se quedó sin procesar). Por eso el
-// frontend espera este tiempo entre un documento y el siguiente del mismo lote,
-// para que cada contabilización tenga espacio de terminar antes de que llegue
-// la próxima.
-const ESPERA_ENTRE_DOCUMENTOS_MS = 90000;
+// Cada documento dispara su propia contabilización en el servidor. Si va por
+// el Contenedor (NIT+producto ya conocido) es rápida (~20-30s); si necesita el
+// agente de IA tarda más (~90-130s). Soltar muchos documentos seguidos sin
+// esperar satura la cuota de Sheets/el motor (confirmado: con 168 de golpe, la
+// mayoría se quedó sin procesar). En vez de esperar un tiempo fijo siempre, el
+// frontend PREGUNTA de verdad si ya terminó (usa que en "Masivo" el nombre del
+// ZIP es el CUFE) y avanza al siguiente apenas confirme que terminó -- así los
+// rápidos no hacen esperar de más, y nunca hay dos contabilizándose a la vez.
+const ESPERA_ENTRE_DOCUMENTOS_MS = 90000; // respaldo cuando no se puede consultar (ver abajo)
+const CONTAB_POLL_INTERVALO_MS = 6000;
+const CONTAB_POLL_MAX_MS = 150000;
+const CONTAB_RAPIDO_UMBRAL_MS = 35000; // por debajo de esto, asumimos que fue por Contenedor
+
+async function esperarContabilizacionPorCufe(control, cufe) {
+  const inicio = Date.now();
+  while (true) {
+    if (control.cancelado) return { encontrado: false, elapsedMs: Date.now() - inicio, cancelado: true };
+    if (control.pausado) { await new Promise((r) => setTimeout(r, 300)); continue; }
+
+    const elapsed = Date.now() - inicio;
+    const pct = Math.min(96, Math.round((elapsed / CONTAB_POLL_MAX_MS) * 96));
+    el.overlayLoteDocBarra.style.width = `${pct}%`;
+    el.overlayLoteDocPaso.textContent = `⏳ Contabilizando (${Math.round(elapsed / 1000)}s)...`;
+
+    try {
+      const res = await fetch(`${URL_CONTABILIDAD_FACTURA}?cufe=${encodeURIComponent(cufe)}`);
+      const data = await res.json();
+      if (data && data.encontrado) {
+        return { encontrado: true, elapsedMs: Date.now() - inicio };
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (Date.now() - inicio >= CONTAB_POLL_MAX_MS) {
+      return { encontrado: false, elapsedMs: Date.now() - inicio };
+    }
+    await new Promise((r) => setTimeout(r, CONTAB_POLL_INTERVALO_MS));
+  }
+}
 
 function esperarConCuentaRegresiva(control, ms) {
   return new Promise((resolve) => {
@@ -1118,7 +1150,7 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante', extra = nul
       el.overlayLoteDocBarra.style.width = '100%';
       if (resultado.ok) {
         el.overlayLoteDocBarra.classList.add('completa');
-        el.overlayLoteDocPaso.textContent = '✓ Registrado · contabilizando en segundo plano';
+        el.overlayLoteDocPaso.textContent = '✓ Registrado · esperando contabilización...';
       } else {
         el.overlayLoteDocPaso.textContent = `✗ ${resultado.mensaje}`;
       }
@@ -1131,8 +1163,27 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante', extra = nul
       }
       actualizarOverlayLote({ actual: procesados, total: archivos.length, texto: '' });
 
+      // En "Masivo (ZIP = CUFE)" el nombre del archivo es el CUFE: se puede
+      // preguntar de verdad si ya terminó de contabilizarse, en vez de esperar
+      // un tiempo fijo. Si no se puede saber (otros tipos de carga), se cae al
+      // respaldo de espera fija.
       if (i < archivos.length - 1 && !control.cancelado) {
-        await esperarConCuentaRegresiva(control, ESPERA_ENTRE_DOCUMENTOS_MS);
+        const cufeDelArchivo = url === URL_BACKFILL_MASIVO ? archivo.name.replace(/\.zip$/i, '').trim() : null;
+        if (resultado.ok && cufeDelArchivo) {
+          const { encontrado, elapsedMs, cancelado } = await esperarContabilizacionPorCufe(control, cufeDelArchivo);
+          if (!cancelado) {
+            const seg = Math.round(elapsedMs / 1000);
+            if (encontrado) {
+              const via = elapsedMs < CONTAB_RAPIDO_UMBRAL_MS ? 'Contenedor · rápido' : 'Agente IA';
+              el.overlayLoteDocBarra.style.width = '100%';
+              el.overlayLoteDocPaso.textContent = `✓ Contabilizada en ${seg}s (${via})`;
+            } else {
+              el.overlayLoteDocPaso.textContent = `⚠ Sigue en segundo plano (más de ${seg}s) · continuando con el siguiente`;
+            }
+          }
+        } else if (resultado.ok) {
+          await esperarConCuentaRegresiva(control, ESPERA_ENTRE_DOCUMENTOS_MS);
+        }
       }
     }
   } finally {
