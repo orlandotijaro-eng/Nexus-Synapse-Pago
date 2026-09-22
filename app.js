@@ -71,9 +71,10 @@ const el = {
   modalAcerca: document.getElementById('modal-acerca'),
   btnCerrarAcerca: document.getElementById('btn-cerrar-acerca'),
 
-  btnVerContabilidad: document.getElementById('btn-ver-contabilidad'),
-  modalContabilidad: document.getElementById('modal-contabilidad'),
-  btnCerrarContabilidad: document.getElementById('btn-cerrar-contabilidad'),
+  appTabBtns: document.querySelectorAll('.app-tab'),
+  toolbarEl: document.querySelector('.toolbar'),
+  mainEl: document.querySelector('.main'),
+  seccionContabilidad: document.getElementById('seccion-contabilidad'),
   contabResumen: document.getElementById('contab-resumen'),
   contabBuscar: document.getElementById('contab-buscar'),
   contabLista: document.getElementById('contab-lista'),
@@ -1592,8 +1593,21 @@ el.formAgregarPuc.addEventListener('submit', async (e) => {
   }
 });
 
-async function abrirModalContabilidad() {
-  el.modalContabilidad.hidden = false;
+// ===== Secciones de nivel de app: Pagos <-> Contabilidad (pestañas grandes) =====
+
+function cambiarAppSeccion(nombre) {
+  el.appTabBtns.forEach((b) => b.classList.toggle('activa', b.dataset.appseccion === nombre));
+  const esContabilidad = nombre === 'contabilidad';
+  el.toolbarEl.hidden = esContabilidad;
+  el.mainEl.hidden = esContabilidad;
+  el.seccionContabilidad.hidden = !esContabilidad;
+  if (esContabilidad) abrirSeccionContabilidad();
+}
+el.appTabBtns.forEach((btn) => {
+  btn.addEventListener('click', () => cambiarAppSeccion(btn.dataset.appseccion));
+});
+
+async function abrirSeccionContabilidad() {
   el.contabBuscar.value = '';
   state.contabPagina = 1;
   cambiarContabSubtab('factura');
@@ -1609,11 +1623,6 @@ async function abrirModalContabilidad() {
   await cargarPucCatalogoSiHaceFalta();
   await cargarContabilidad();
 }
-function cerrarModalContabilidad() {
-  el.modalContabilidad.hidden = true;
-}
-el.btnVerContabilidad.addEventListener('click', abrirModalContabilidad);
-el.btnCerrarContabilidad.addEventListener('click', cerrarModalContabilidad);
 el.contabBuscar.addEventListener('input', () => { state.contabPagina = 1; renderContabilidad(); });
 el.btnQuitarFiltroActivo.addEventListener('click', () => {
   state.contabFiltroActivoCufe = null;

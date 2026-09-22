@@ -349,8 +349,19 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .modal-informal-panel h3 { text-align: left; }
 
 .modal-contabilidad-panel { max-width: 960px; width: 92vw; max-height: 88vh; overflow-y: auto; text-align: left; }
+
+/* ================= Pestañas de nivel de app: Pagos / Contabilidad ================= */
+.app-tabs { display: flex; gap: 4px; padding: 0 16px; background: var(--card-bg); border-bottom: 2px solid var(--border); }
+.app-tab { padding: 12px 20px; border: 0; background: transparent; color: var(--text-muted); font-weight: 800; font-size: 0.92rem; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.app-tab:hover { color: var(--text); }
+.app-tab.activa { color: #1d4ed8; border-bottom-color: #1d4ed8; }
+
+.seccion-pagina { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 20px 24px; max-width: 1400px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.seccion-pagina[hidden] { display: none; }
+.toolbar[hidden] { display: none; }
+.main[hidden] { display: none; }
 .contab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-.contab-head h3 { margin: 0; text-align: left; color: var(--contab); }
+.contab-head h2, .contab-head h3 { margin: 0; text-align: left; color: var(--contab); }
 .contab-resumen { margin: 0 0 10px; color: var(--text-muted); font-size: 0.85rem; }
 #contab-buscar { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; font-size: 0.88rem; background: var(--card-bg); color: var(--text); }
 .contab-filtro-activo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--contab-bg); border: 1px solid var(--contab); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 0.82rem; }
