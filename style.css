@@ -356,8 +356,11 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .app-tab:hover { color: var(--text); }
 .app-tab.activa { color: #1d4ed8; border-bottom-color: #1d4ed8; }
 
-.seccion-pagina { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 20px 24px; max-width: 1400px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.seccion-pagina { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 16px 24px; width: 100%; box-sizing: border-box; }
 .seccion-pagina[hidden] { display: none; }
+#contab-vista-factura { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+#contab-vista-todo { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#contab-vista-todo[hidden] { display: none; }
 .toolbar[hidden] { display: none; }
 .main[hidden] { display: none; }
 .contab-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
@@ -445,7 +448,8 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .contab-todo-filtros select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
 .contab-todo-filtros #contab-todo-buscar { flex: 1; min-width: 180px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: var(--card-bg); color: var(--text); }
 
-.contab-todo-tabla-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.contab-todo-tabla-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.contab-todo-filtros, #contab-todo-resumen, #contab-todo-paginacion { flex: 0 0 auto; }
 .contab-todo-tabla { border-collapse: collapse; font-size: 0.76rem; white-space: nowrap; width: 100%; }
 .contab-todo-tabla th { background: var(--header-bg); text-align: left; padding: 6px 8px; position: sticky; top: 0; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); }
 .contab-todo-tabla td { padding: 5px 8px; border-top: 1px solid var(--border); }
