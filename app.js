@@ -86,6 +86,7 @@ const el = {
   pucAgregarMensaje: document.getElementById('puc-agregar-mensaje'),
   pucFiltroTipoBtns: document.querySelectorAll('.puc-filtro-tipo'),
   pucBuscar: document.getElementById('puc-buscar'),
+  btnPucVerTodo: document.getElementById('btn-puc-ver-todo'),
   pucResumen: document.getElementById('puc-resumen'),
   pucLista: document.getElementById('puc-lista'),
   pucPaginacion: document.getElementById('puc-paginacion'),
@@ -1359,39 +1360,113 @@ function cerrarModalPuc() {
   el.modalPuc.hidden = true;
 }
 
-function renderPuc() {
-  const texto = (el.pucBuscar.value || '').toLowerCase().trim();
-  const catalogo = state.pucCatalogo || [];
-  let items = catalogo;
-  if (state.pucFiltroTipo !== 'todos') items = items.filter((c) => c.tipo === state.pucFiltroTipo);
-  if (texto) items = items.filter((c) => `${c.codigo || ''} ${c.nombre || ''} ${c.descripcion || ''}`.toLowerCase().includes(texto));
+function esCuentaMadre(c) {
+  return (c.descripcion || '').toString().trim().toUpperCase() === 'CUENTA MADRE';
+}
 
-  const totalCosto = catalogo.filter((c) => c.tipo === 'COSTO').length;
-  const totalGasto = catalogo.filter((c) => c.tipo === 'GASTO').length;
-  el.pucResumen.textContent = `${catalogo.length} cuentas (${totalCosto} costo · ${totalGasto} gasto)${(texto || state.pucFiltroTipo !== 'todos') ? ` · mostrando ${items.length}` : ''}`;
-
-  if (!items.length) {
-    el.pucLista.innerHTML = `<div class="contab-vacio">${texto || state.pucFiltroTipo !== 'todos' ? 'Ninguna cuenta coincide con el filtro.' : 'Todavía no hay cuentas cargadas.'}</div>`;
-    el.pucPaginacion.hidden = true;
-    return;
+// Agrupa por jerarquía de código: una "madre" (ej. 5110) es padre de toda cuenta
+// cuyo código empiece con ese prefijo (ej. 511010, 511025). Si una cuenta no cae
+// bajo ninguna madre del mismo tipo, queda "suelta" (nivel superior, como las de Costo).
+function agruparPorMadre(items) {
+  const madres = items.filter(esCuentaMadre);
+  const hijos = items.filter((c) => !esCuentaMadre(c));
+  const madresOrdenadas = [...madres].sort((a, b) => String(b.codigo).length - String(a.codigo).length);
+  const grupos = new Map(madres.map((m) => [m.codigo, { madre: m, hijos: [] }]));
+  const sueltos = [];
+  for (const h of hijos) {
+    const padre = madresOrdenadas.find((m) => String(h.codigo).startsWith(String(m.codigo)) && String(h.codigo) !== String(m.codigo));
+    if (padre) grupos.get(padre.codigo).hijos.push(h);
+    else sueltos.push(h);
   }
+  return { grupos: [...grupos.values()], sueltos };
+}
 
-  const totalPaginas = Math.max(1, Math.ceil(items.length / PUC_POR_PAGINA));
-  if (state.pucPagina > totalPaginas) state.pucPagina = totalPaginas;
-  if (state.pucPagina < 1) state.pucPagina = 1;
-  const inicio = (state.pucPagina - 1) * PUC_POR_PAGINA;
-  const itemsPagina = items.slice(inicio, inicio + PUC_POR_PAGINA);
-
-  renderPaginacionPuc(totalPaginas);
-
-  el.pucLista.innerHTML = itemsPagina.map((c) => `
-    <div class="puc-fila${(c.descripcion || '').toString().trim().toUpperCase() === 'CUENTA MADRE' ? ' cuenta-madre' : ''}">
+function filaPucHtml(c) {
+  return `
+    <div class="puc-fila${esCuentaMadre(c) ? ' cuenta-madre' : ''}">
       <span class="pf-codigo">${escapeHtml(c.codigo || '')}</span>
       <span class="pf-nombre">${escapeHtml(c.nombre || '')}</span>
       <span class="pf-concepto">${escapeHtml(c.descripcion || '')}</span>
       <span class="puc-badge-tipo ${c.tipo === 'GASTO' ? 'gasto' : 'costo'}">${escapeHtml(c.tipo || '')}</span>
     </div>
-  `).join('');
+  `;
+}
+
+function renderPuc() {
+  const texto = (el.pucBuscar.value || '').toLowerCase().trim();
+  const catalogo = state.pucCatalogo || [];
+  let base = catalogo;
+  if (state.pucFiltroTipo !== 'todos') base = base.filter((c) => c.tipo === state.pucFiltroTipo);
+
+  const totalCosto = catalogo.filter((c) => c.tipo === 'COSTO').length;
+  const totalGasto = catalogo.filter((c) => c.tipo === 'GASTO').length;
+
+  // Con búsqueda de texto: lista plana (sin jerarquía) para encontrar cualquier
+  // cuenta al toque, esté donde esté agrupada.
+  if (texto) {
+    const items = base.filter((c) => `${c.codigo || ''} ${c.nombre || ''} ${c.descripcion || ''}`.toLowerCase().includes(texto));
+    el.pucResumen.textContent = `${catalogo.length} cuentas (${totalCosto} costo · ${totalGasto} gasto) · mostrando ${items.length}`;
+    el.btnPucVerTodo.hidden = true;
+    if (!items.length) {
+      el.pucLista.innerHTML = `<div class="contab-vacio">Ninguna cuenta coincide con la búsqueda.</div>`;
+      el.pucPaginacion.hidden = true;
+      return;
+    }
+    const totalPaginas = Math.max(1, Math.ceil(items.length / PUC_POR_PAGINA));
+    if (state.pucPagina > totalPaginas) state.pucPagina = totalPaginas;
+    if (state.pucPagina < 1) state.pucPagina = 1;
+    const inicio = (state.pucPagina - 1) * PUC_POR_PAGINA;
+    renderPaginacionPuc(totalPaginas);
+    el.pucLista.innerHTML = items.slice(inicio, inicio + PUC_POR_PAGINA).map(filaPucHtml).join('');
+    return;
+  }
+
+  el.pucResumen.textContent = `${catalogo.length} cuentas (${totalCosto} costo · ${totalGasto} gasto)${state.pucFiltroTipo !== 'todos' ? ` · mostrando ${base.length}` : ''}`;
+
+  if (!base.length) {
+    el.pucLista.innerHTML = `<div class="contab-vacio">${state.pucFiltroTipo !== 'todos' ? 'Ninguna cuenta coincide con el filtro.' : 'Todavía no hay cuentas cargadas.'}</div>`;
+    el.pucPaginacion.hidden = true;
+    el.btnPucVerTodo.hidden = true;
+    return;
+  }
+
+  const { grupos, sueltos } = agruparPorMadre(base);
+  const nivelSuperior = [
+    ...grupos.map((g) => ({ esGrupo: true, codigo: g.madre.codigo, g })),
+    ...sueltos.map((s) => ({ esGrupo: false, codigo: s.codigo, s })),
+  ].sort((a, b) => String(a.codigo).localeCompare(String(b.codigo), undefined, { numeric: true }));
+
+  el.btnPucVerTodo.hidden = grupos.length === 0;
+  el.btnPucVerTodo.textContent = '⊞ Ver todo';
+
+  const totalPaginas = Math.max(1, Math.ceil(nivelSuperior.length / PUC_POR_PAGINA));
+  if (state.pucPagina > totalPaginas) state.pucPagina = totalPaginas;
+  if (state.pucPagina < 1) state.pucPagina = 1;
+  const inicio = (state.pucPagina - 1) * PUC_POR_PAGINA;
+  const pagina = nivelSuperior.slice(inicio, inicio + PUC_POR_PAGINA);
+
+  renderPaginacionPuc(totalPaginas);
+
+  el.pucLista.innerHTML = pagina.map((entrada) => {
+    if (!entrada.esGrupo) return filaPucHtml(entrada.s);
+    const { madre, hijos } = entrada.g;
+    return `
+      <div class="puc-grupo">
+        <div class="puc-fila puc-fila-madre cuenta-madre">
+          <span class="pf-flecha">›</span>
+          <span class="pf-codigo">${escapeHtml(madre.codigo || '')}</span>
+          <span class="pf-nombre">${escapeHtml(madre.nombre || '')}</span>
+          <span class="pf-concepto">${hijos.length} cuenta${hijos.length === 1 ? '' : 's'}</span>
+          <span class="puc-badge-tipo ${madre.tipo === 'GASTO' ? 'gasto' : 'costo'}">${escapeHtml(madre.tipo || '')}</span>
+        </div>
+        <div class="puc-hijos">${hijos.map(filaPucHtml).join('')}</div>
+      </div>
+    `;
+  }).join('');
+
+  el.pucLista.querySelectorAll('.puc-fila-madre').forEach((head) => {
+    head.addEventListener('click', () => head.closest('.puc-grupo').classList.toggle('abierta'));
+  });
 }
 
 function renderPaginacionPuc(totalPaginas) {
@@ -1418,6 +1493,12 @@ function renderPaginacionPuc(totalPaginas) {
 el.btnVerPuc.addEventListener('click', abrirModalPuc);
 el.btnCerrarPuc.addEventListener('click', cerrarModalPuc);
 el.pucBuscar.addEventListener('input', () => { state.pucPagina = 1; renderPuc(); });
+el.btnPucVerTodo.addEventListener('click', () => {
+  const grupos = [...el.pucLista.querySelectorAll('.puc-grupo')];
+  const hayAlgunaCerrada = grupos.some((g) => !g.classList.contains('abierta'));
+  grupos.forEach((g) => g.classList.toggle('abierta', hayAlgunaCerrada));
+  el.btnPucVerTodo.textContent = hayAlgunaCerrada ? '⊟ Colapsar todo' : '⊞ Ver todo';
+});
 el.pucFiltroTipoBtns.forEach((btn) => {
   btn.addEventListener('click', () => {
     state.pucFiltroTipo = btn.dataset.tipo;

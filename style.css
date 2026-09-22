@@ -388,6 +388,14 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .puc-fila .pf-nombre { font-weight: 700; }
 .puc-fila .pf-concepto { flex: 1; min-width: 180px; color: var(--text-muted); font-size: 0.8rem; }
 .puc-fila.cuenta-madre .pf-codigo, .puc-fila.cuenta-madre .pf-nombre, .puc-fila.cuenta-madre .pf-concepto { text-decoration: underline; }
+
+.puc-grupo { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.puc-grupo .puc-fila-madre { border: 0; border-radius: 0; background: var(--contab-bg); cursor: pointer; }
+.puc-fila-madre .pf-flecha { color: var(--contab); transition: transform 0.15s; }
+.puc-grupo.abierta .pf-flecha { transform: rotate(90deg); }
+.puc-hijos { display: none; flex-direction: column; gap: 6px; padding: 6px; }
+.puc-grupo.abierta .puc-hijos { display: flex; }
+.puc-hijos .puc-fila { border-color: var(--border); margin-left: 14px; }
 .puc-badge-tipo { padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
 .puc-badge-tipo.costo { background: var(--ok-bg); color: var(--ok); }
 .puc-badge-tipo.gasto { background: var(--credito-bg); color: var(--credito); }
