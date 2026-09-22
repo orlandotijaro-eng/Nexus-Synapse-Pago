@@ -87,6 +87,11 @@ body {
 .banner-acerca .ba-ico { font-size: 15px; }
 .banner-acerca .ba-txt { font-size: 0.72rem; font-weight: 600; }
 .banner-acerca .ba-flecha { font-size: 16px; font-weight: 700; opacity: 0.85; }
+.version-badge {
+  flex: 0 0 auto; font-size: 0.72rem; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 999px; padding: 5px 12px; letter-spacing: 0.5px; white-space: nowrap;
+}
 .acerca-parrafo { font-size: 0.78rem; line-height: 1.55; color: var(--text); margin: 0 0 10px; text-align: left; }
 
 .btn { border: none; border-radius: 8px; padding: 7px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
