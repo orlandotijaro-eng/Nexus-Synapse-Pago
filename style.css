@@ -387,6 +387,7 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .puc-fila .pf-codigo { font-weight: 800; color: var(--contab); min-width: 60px; }
 .puc-fila .pf-nombre { font-weight: 700; }
 .puc-fila .pf-concepto { flex: 1; min-width: 180px; color: var(--text-muted); font-size: 0.8rem; }
+.puc-fila.cuenta-madre .pf-codigo, .puc-fila.cuenta-madre .pf-nombre, .puc-fila.cuenta-madre .pf-concepto { text-decoration: underline; }
 .puc-badge-tipo { padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
 .puc-badge-tipo.costo { background: var(--ok-bg); color: var(--ok); }
 .puc-badge-tipo.gasto { background: var(--credito-bg); color: var(--credito); }

@@ -1385,7 +1385,7 @@ function renderPuc() {
   renderPaginacionPuc(totalPaginas);
 
   el.pucLista.innerHTML = itemsPagina.map((c) => `
-    <div class="puc-fila">
+    <div class="puc-fila${(c.descripcion || '').toString().trim().toUpperCase() === 'CUENTA MADRE' ? ' cuenta-madre' : ''}">
       <span class="pf-codigo">${escapeHtml(c.codigo || '')}</span>
       <span class="pf-nombre">${escapeHtml(c.nombre || '')}</span>
       <span class="pf-concepto">${escapeHtml(c.descripcion || '')}</span>
