@@ -12,6 +12,7 @@ const URL_ADJUNTAR_SOPORTE = `${API_BASE}/hye-adjuntar-soporte`;
 const URL_CONTABILIDAD = `${API_BASE}/hye-contabilidad`;
 const URL_PUC_CATALOGO = `${API_BASE}/hye-puc-catalogo`;
 const URL_CONTABILIDAD_FACTURA = `${API_BASE}/hye-contabilidad-factura`;
+const URL_CONTABILIDAD_TODO = `${API_BASE}/hye-contabilidad-todo`;
 const URL_CONTABILIZAR_AHORA = `${API_BASE}/hye-contabilizar-ahora`;
 const URL_CORREGIR_CODIGO = `${API_BASE}/hye-corregir-codigo`;
 const URL_PUC_AGREGAR = `${API_BASE}/hye-puc-agregar`;
@@ -21,9 +22,11 @@ const METODOS_PAGO = ['Crédito', 'Efectivo', 'Banco Av Villas', 'Banco Davivien
 const METODO_LABELS = { NEQUI_LE: 'Nequi (L.E)' };
 function labelMetodo(m) { return METODO_LABELS[m] || m; }
 
-const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1, pucFiltroTipo: 'todos', pucPagina: 1 };
+const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1, pucFiltroTipo: 'todos', pucPagina: 1, contabSubtab: 'factura', contabilidadTodo: null, contabTodoMes: null, contabTodoPagina: 1 };
 const CONTAB_POR_PAGINA = 25;
 const PUC_POR_PAGINA = 25;
+const CONTAB_TODO_POR_PAGINA = 40;
+const MESES_LARGO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 const el = {
   tabla: document.getElementById('tabla-facturas'),
@@ -78,6 +81,15 @@ const el = {
   contabFiltroActivoTexto: document.getElementById('contab-filtro-activo-texto'),
   btnQuitarFiltroActivo: document.getElementById('btn-quitar-filtro-activo'),
   contabPaginacion: document.getElementById('contab-paginacion'),
+
+  contabSubtabBtns: document.querySelectorAll('.contab-subtab'),
+  contabVistaFactura: document.getElementById('contab-vista-factura'),
+  contabVistaTodo: document.getElementById('contab-vista-todo'),
+  contabTodoMes: document.getElementById('contab-todo-mes'),
+  contabTodoBuscar: document.getElementById('contab-todo-buscar'),
+  contabTodoResumen: document.getElementById('contab-todo-resumen'),
+  contabTodoBody: document.getElementById('contab-todo-body'),
+  contabTodoPaginacion: document.getElementById('contab-todo-paginacion'),
 
   btnVerPuc: document.getElementById('btn-ver-puc'),
   modalPuc: document.getElementById('modal-puc'),
@@ -1584,6 +1596,7 @@ async function abrirModalContabilidad() {
   el.modalContabilidad.hidden = false;
   el.contabBuscar.value = '';
   state.contabPagina = 1;
+  cambiarContabSubtab('factura');
 
   const activa = state.itemActivo != null ? state.facturas.find((f) => String(f.item) === String(state.itemActivo)) : null;
   if (activa && activa.cufe) {
@@ -1607,6 +1620,144 @@ el.btnQuitarFiltroActivo.addEventListener('click', () => {
   state.contabPagina = 1;
   renderContabilidad();
 });
+
+// ===== Subpestaña "Todo" (hoja completa de Importacion_ERP, filtrada por mes) =====
+
+function cambiarContabSubtab(nombre) {
+  state.contabSubtab = nombre;
+  el.contabSubtabBtns.forEach((b) => b.classList.toggle('activa', b.dataset.subtab === nombre));
+  el.contabVistaFactura.hidden = nombre !== 'factura';
+  el.contabVistaTodo.hidden = nombre !== 'todo';
+  if (nombre === 'todo') cargarContabilidadTodoSiHaceFalta();
+}
+el.contabSubtabBtns.forEach((btn) => {
+  btn.addEventListener('click', () => cambiarContabSubtab(btn.dataset.subtab));
+});
+
+function claveMes(fechaDdMmYyyy) {
+  // FECHA viene como dd/mm/yyyy desde Importacion_ERP.
+  const m = String(fechaDdMmYyyy || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const mes = m[2].padStart(2, '0');
+  return `${m[3]}-${mes}`;
+}
+function etiquetaMes(clave) {
+  const [anio, mes] = clave.split('-');
+  const nombre = MESES_LARGO[Number(mes) - 1] || mes;
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
+}
+
+async function cargarContabilidadTodoSiHaceFalta() {
+  if (state.contabilidadTodo) { renderContabTodo(); return; }
+  el.contabTodoResumen.textContent = 'Cargando...';
+  el.contabTodoBody.innerHTML = '';
+  try {
+    const res = await fetch(URL_CONTABILIDAD_TODO);
+    state.contabilidadTodo = await res.json();
+  } catch (err) {
+    console.error(err);
+    state.contabilidadTodo = [];
+    el.contabTodoResumen.textContent = 'No se pudo cargar la hoja completa.';
+    return;
+  }
+  poblarMesesContabTodo();
+  renderContabTodo();
+}
+
+function poblarMesesContabTodo() {
+  const claves = new Set();
+  for (const f of state.contabilidadTodo) {
+    const c = claveMes(f.fecha);
+    if (c) claves.add(c);
+  }
+  const ordenadas = [...claves].sort().reverse();
+  el.contabTodoMes.innerHTML = ordenadas.map((c) => `<option value="${c}">${etiquetaMes(c)}</option>`).join('');
+  if (!state.contabTodoMes || !ordenadas.includes(state.contabTodoMes)) {
+    state.contabTodoMes = ordenadas[0] || null;
+  }
+  el.contabTodoMes.value = state.contabTodoMes || '';
+}
+
+function renderContabTodo() {
+  const mes = el.contabTodoMes.value || state.contabTodoMes;
+  const texto = (el.contabTodoBuscar.value || '').toLowerCase().trim();
+  let items = (state.contabilidadTodo || []).filter((f) => claveMes(f.fecha) === mes);
+  if (texto) {
+    items = items.filter((f) => `${f.terceroExterno || ''} ${f.nota || ''} ${f.prefijo || ''}${f.numero || ''} ${f.clave || ''}`.toLowerCase().includes(texto));
+  }
+
+  el.contabTodoResumen.textContent = mes
+    ? `${etiquetaMes(mes)} · ${items.length} línea${items.length === 1 ? '' : 's'}`
+    : 'No hay datos contabilizados todavía.';
+
+  if (!items.length) {
+    el.contabTodoBody.innerHTML = `<tr><td colspan="20" class="contab-vacio">Sin líneas para este mes${texto ? ' / búsqueda' : ''}.</td></tr>`;
+    el.contabTodoPaginacion.hidden = true;
+    return;
+  }
+
+  const totalPaginas = Math.max(1, Math.ceil(items.length / CONTAB_TODO_POR_PAGINA));
+  if (state.contabTodoPagina > totalPaginas) state.contabTodoPagina = totalPaginas;
+  if (state.contabTodoPagina < 1) state.contabTodoPagina = 1;
+  const inicio = (state.contabTodoPagina - 1) * CONTAB_TODO_POR_PAGINA;
+  const pagina = items.slice(inicio, inicio + CONTAB_TODO_POR_PAGINA);
+
+  renderPaginacionGenerica(el.contabTodoPaginacion, totalPaginas, state.contabTodoPagina, (p) => {
+    state.contabTodoPagina = p;
+    renderContabTodo();
+  });
+
+  el.contabTodoBody.innerHTML = pagina.map((f) => `
+    <tr>
+      <td>${escapeHtml(f.fecha || '')}</td>
+      <td>${escapeHtml(f.prefijo || '')}${escapeHtml(String(f.numero || ''))}</td>
+      <td>${escapeHtml(String(f.terceroExterno || ''))}</td>
+      <td>${escapeHtml(f.nota || '')}</td>
+      <td>${escapeHtml(String(f.codigoInventario || ''))}</td>
+      <td class="num">${escapeHtml(String(f.cantidad ?? ''))}</td>
+      <td class="num">${formatoMoneda2(f.valorUnit)}</td>
+      <td class="num">${f.ivaPct !== '' && f.ivaPct !== undefined ? `${Math.round((Number(f.ivaPct) || 0) * 10000) / 100}%` : '—'}</td>
+      <td>${escapeHtml(f.formaDePago || '')}</td>
+      <td>${escapeHtml(f.estadoCarga || '')}</td>
+      <td>${escapeHtml(f.notaDetalle || '')}</td>
+      <td>${escapeHtml(f.empresa || '')}</td>
+      <td>${escapeHtml(f.bodega || '')}</td>
+      <td>${escapeHtml(f.fechaVencimiento || '')}</td>
+      <td>${f.anulado ? 'Sí' : 'No'}</td>
+      <td>${escapeHtml(f.ciudadRemitente || '')}</td>
+      <td>${escapeHtml(f.emailOrigen || '')}</td>
+      <td>${escapeHtml(f.fechaHoraProceso || '')}</td>
+      <td title="${escapeHtml(f.clave || '')}">${escapeHtml((f.clave || '').slice(0, 10))}…</td>
+      <td>${f.linkPdf ? `<a href="${escapeHtml(f.linkPdf)}" target="_blank" rel="noopener">PDF</a>` : '—'}</td>
+      <td>${f.linkXml ? `<a href="${escapeHtml(f.linkXml)}" target="_blank" rel="noopener">XML</a>` : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// Paginador genérico reutilizable (estilo MultiPage) para cualquier contenedor.
+function renderPaginacionGenerica(contenedor, totalPaginas, paginaActual, onCambio) {
+  contenedor.hidden = totalPaginas <= 1;
+  if (totalPaginas <= 1) { contenedor.innerHTML = ''; return; }
+  const paginas = paginasVisibles(totalPaginas, paginaActual);
+  contenedor.innerHTML = `
+    <button type="button" class="contab-pag-btn" data-pagina="${paginaActual - 1}" ${paginaActual <= 1 ? 'disabled' : ''}>‹</button>
+    ${paginas.map((p) => p === '…'
+      ? '<span class="contab-pag-puntos">…</span>'
+      : `<button type="button" class="contab-pag-btn${p === paginaActual ? ' activa' : ''}" data-pagina="${p}">${p}</button>`
+    ).join('')}
+    <button type="button" class="contab-pag-btn" data-pagina="${paginaActual + 1}" ${paginaActual >= totalPaginas ? 'disabled' : ''}>›</button>
+  `;
+  contenedor.querySelectorAll('.contab-pag-btn:not(:disabled)').forEach((btn) => {
+    btn.addEventListener('click', () => onCambio(Number(btn.dataset.pagina)));
+  });
+}
+
+el.contabTodoMes.addEventListener('change', () => {
+  state.contabTodoMes = el.contabTodoMes.value;
+  state.contabTodoPagina = 1;
+  renderContabTodo();
+});
+el.contabTodoBuscar.addEventListener('input', () => { state.contabTodoPagina = 1; renderContabTodo(); });
 
 async function cargarPucCatalogoSiHaceFalta(forzar = false) {
   if (state.pucCatalogo && !forzar) return state.pucCatalogo;

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-11">
+<link rel="stylesheet" href="style.css?v=2026.09.22-12">
 </head>
 <body>
 <header class="topbar">
@@ -213,14 +213,42 @@
       <h3>🧮 Contabilización</h3>
       <button type="button" id="btn-cerrar-contabilidad" class="btn btn-secundario">✕ Cerrar</button>
     </div>
-    <p id="contab-resumen" class="contab-resumen">Cargando...</p>
-    <div id="contab-filtro-activo" class="contab-filtro-activo" hidden>
-      Mostrando: <b id="contab-filtro-activo-texto"></b>
-      <button type="button" id="btn-quitar-filtro-activo" class="btn btn-secundario">Ver todas</button>
+    <div class="contab-subtabs">
+      <button type="button" class="contab-subtab activa" data-subtab="factura">Por factura</button>
+      <button type="button" class="contab-subtab" data-subtab="todo">Todo (hoja completa)</button>
     </div>
-    <input id="contab-buscar" type="search" placeholder="Buscar por proveedor, NIT o número de factura...">
-    <div id="contab-lista" class="contab-lista"></div>
-    <div id="contab-paginacion" class="contab-paginacion" hidden></div>
+
+    <div id="contab-vista-factura">
+      <p id="contab-resumen" class="contab-resumen">Cargando...</p>
+      <div id="contab-filtro-activo" class="contab-filtro-activo" hidden>
+        Mostrando: <b id="contab-filtro-activo-texto"></b>
+        <button type="button" id="btn-quitar-filtro-activo" class="btn btn-secundario">Ver todas</button>
+      </div>
+      <input id="contab-buscar" type="search" placeholder="Buscar por proveedor, NIT o número de factura...">
+      <div id="contab-lista" class="contab-lista"></div>
+      <div id="contab-paginacion" class="contab-paginacion" hidden></div>
+    </div>
+
+    <div id="contab-vista-todo" hidden>
+      <div class="contab-todo-filtros">
+        <label>Mes <select id="contab-todo-mes"></select></label>
+        <input id="contab-todo-buscar" type="search" placeholder="Buscar dentro del mes...">
+      </div>
+      <p id="contab-todo-resumen" class="contab-resumen">Cargando...</p>
+      <div class="contab-todo-tabla-wrap">
+        <table class="contab-todo-tabla">
+          <thead><tr>
+            <th>Fecha</th><th>Documento</th><th>NIT</th><th>Descripción</th><th>Código</th>
+            <th class="num">Cant.</th><th class="num">Valor unit.</th><th class="num">IVA %</th>
+            <th>F. Pago</th><th>Estado</th><th>Nota detalle</th><th>Empresa</th><th>Bodega</th>
+            <th>F. Vencim.</th><th>Anulado</th><th>Ciudad</th><th>Correo origen</th><th>F. Proceso</th>
+            <th>CUFE</th><th>PDF</th><th>XML</th>
+          </tr></thead>
+          <tbody id="contab-todo-body"></tbody>
+        </table>
+      </div>
+      <div id="contab-todo-paginacion" class="contab-paginacion" hidden></div>
+    </div>
   </div>
 </div>
 
@@ -569,6 +597,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-11"></script>
+<script src="app.js?v=2026.09.22-12"></script>
 </body>
 </html>

@@ -425,6 +425,24 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .contab-resumen-iva .cri-total { background: var(--contab-bg); }
 .contab-resumen-iva .cri-total th, .contab-resumen-iva .cri-total td { color: var(--contab); font-size: 0.9rem; }
 
+.contab-subtabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+.contab-subtab { padding: 8px 14px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--text-muted); font-weight: 700; font-size: 0.84rem; cursor: pointer; }
+.contab-subtab.activa { color: var(--contab); border-bottom-color: var(--contab); }
+
+.contab-todo-filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.contab-todo-filtros label { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; color: var(--text); }
+.contab-todo-filtros select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: var(--card-bg); color: var(--text); }
+.contab-todo-filtros #contab-todo-buscar { flex: 1; min-width: 180px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: var(--card-bg); color: var(--text); }
+
+.contab-todo-tabla-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.contab-todo-tabla { border-collapse: collapse; font-size: 0.76rem; white-space: nowrap; width: 100%; }
+.contab-todo-tabla th { background: var(--header-bg); text-align: left; padding: 6px 8px; position: sticky; top: 0; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); }
+.contab-todo-tabla td { padding: 5px 8px; border-top: 1px solid var(--border); }
+.contab-todo-tabla td.num { text-align: right; }
+.contab-todo-tabla tr:hover td { background: var(--contab-bg); }
+.contab-todo-tabla a { color: var(--contab); font-weight: 700; text-decoration: none; }
+.contab-todo-tabla a:hover { text-decoration: underline; }
+
 .contab-factura-estado { text-align: center; padding: 24px 12px; color: var(--text-muted); }
 .contab-factura-estado p { margin: 0 0 10px; }
 .contab-aplicar-todas { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding: 10px; border: 1px dashed var(--contab); border-radius: 8px; background: var(--contab-bg); }
