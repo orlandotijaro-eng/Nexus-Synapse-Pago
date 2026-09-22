@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-14">
+<link rel="stylesheet" href="style.css?v=2026.09.22-15">
 </head>
 <body>
 <header class="topbar">
@@ -555,6 +555,10 @@
       <div id="contab-factura-vacia" class="contab-factura-estado" hidden>
         <p>Esta factura todavía no tiene contabilización.</p>
         <button type="button" id="btn-contabilizar-ahora" class="btn btn-contabilidad">🧮 Contabilizar ahora</button>
+        <div id="contabilizar-ahora-progreso" class="progreso-wrap" hidden>
+          <div class="progreso-barra-fondo"><div id="contabilizar-ahora-barra" class="progreso-barra"></div></div>
+          <p id="contabilizar-ahora-paso" class="progreso-paso"></p>
+        </div>
         <p id="contabilizar-ahora-mensaje" class="form-mensaje"></p>
       </div>
 
@@ -592,6 +596,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-13"></script>
+<script src="app.js?v=2026.09.22-15"></script>
 </body>
 </html>

@@ -152,6 +152,9 @@ const el = {
   contabFacturaVacia: document.getElementById('contab-factura-vacia'),
   btnContabilizarAhora: document.getElementById('btn-contabilizar-ahora'),
   contabilizarAhoraMensaje: document.getElementById('contabilizar-ahora-mensaje'),
+  contabilizarAhoraProgreso: document.getElementById('contabilizar-ahora-progreso'),
+  contabilizarAhoraBarra: document.getElementById('contabilizar-ahora-barra'),
+  contabilizarAhoraPaso: document.getElementById('contabilizar-ahora-paso'),
   contabFacturaLista: document.getElementById('contab-factura-lista'),
   contabSelectTodas: document.getElementById('contab-select-todas'),
   btnAplicarTodasCodigo: document.getElementById('btn-aplicar-todas-codigo'),
@@ -1843,12 +1846,50 @@ function renderContabLineasEditable(data) {
   el.contabGuardarMensaje.className = 'form-mensaje';
 }
 
+// Etapas aproximadas del proceso real (Buscar factura -> bajar PDF/XML de Drive ->
+// esperar ~90s a que el motor registre -> IA clasifica y registra). No hay progreso
+// real segundo a segundo (es una sola llamada sincrónica), así que se simula el
+// avance contra el tiempo transcurrido para que el usuario vea que algo se mueve
+// y sepa aproximadamente en qué va, en vez de una pantalla congelada.
+const ETAPAS_CONTABILIZAR = [
+  { hasta: 4000, pct: 4, texto: 'Buscando la factura...' },
+  { hasta: 12000, pct: 12, texto: 'Descargando el PDF y el XML ya archivados...' },
+  { hasta: 100000, pct: 85, texto: 'Esperando que el sistema registre los datos...' },
+  { hasta: 130000, pct: 94, texto: 'Clasificando con inteligencia artificial...' },
+  { hasta: Infinity, pct: 96, texto: 'Terminando de registrar, ya casi...' },
+];
+function pctYTextoContabilizar(elapsedMs) {
+  for (let i = 0; i < ETAPAS_CONTABILIZAR.length; i++) {
+    const etapa = ETAPAS_CONTABILIZAR[i];
+    if (elapsedMs <= etapa.hasta) {
+      const anterior = ETAPAS_CONTABILIZAR[i - 1];
+      const pctDesde = anterior ? anterior.pct : 0;
+      const msDesde = anterior ? anterior.hasta : 0;
+      const frac = etapa.hasta === Infinity ? 1 : (elapsedMs - msDesde) / (etapa.hasta - msDesde);
+      const pct = pctDesde + (etapa.pct - pctDesde) * Math.min(1, Math.max(0, frac));
+      return { pct, texto: etapa.texto };
+    }
+  }
+  return { pct: 96, texto: 'Terminando de registrar, ya casi...' };
+}
+
 el.btnContabilizarAhora.addEventListener('click', async () => {
   const cufe = state.contabFacturaCufe;
   if (!cufe) return;
   el.btnContabilizarAhora.disabled = true;
-  el.contabilizarAhoraMensaje.textContent = 'Contabilizando... esto puede tardar 1 o 2 minutos, no cierres esta pestaña.';
+  el.contabilizarAhoraMensaje.textContent = '';
   el.contabilizarAhoraMensaje.className = 'form-mensaje';
+  el.contabilizarAhoraProgreso.hidden = false;
+  el.contabilizarAhoraBarra.classList.remove('completa');
+  el.contabilizarAhoraBarra.style.width = '0%';
+
+  const inicio = Date.now();
+  const intervalo = setInterval(() => {
+    const { pct, texto } = pctYTextoContabilizar(Date.now() - inicio);
+    el.contabilizarAhoraBarra.style.width = `${pct}%`;
+    el.contabilizarAhoraPaso.textContent = texto;
+  }, 400);
+
   try {
     const res = await fetch(URL_CONTABILIZAR_AHORA, {
       method: 'POST',
@@ -1857,6 +1898,10 @@ el.btnContabilizarAhora.addEventListener('click', async () => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.ok === false) throw new Error(data.mensaje || 'No se pudo contabilizar.');
+    clearInterval(intervalo);
+    el.contabilizarAhoraBarra.style.width = '100%';
+    el.contabilizarAhoraBarra.classList.add('completa');
+    el.contabilizarAhoraPaso.textContent = '¡Listo!';
     el.contabilizarAhoraMensaje.textContent = 'Contabilizada correctamente.';
     el.contabilizarAhoraMensaje.className = 'form-mensaje ok';
     const factura = state.facturas.find((f) => f.cufe === cufe);
@@ -1866,7 +1911,9 @@ el.btnContabilizarAhora.addEventListener('click', async () => {
       render();
     }
   } catch (err) {
+    clearInterval(intervalo);
     console.error(err);
+    el.contabilizarAhoraProgreso.hidden = true;
     el.contabilizarAhoraMensaje.textContent = err.message || 'Error de conexión.';
     el.contabilizarAhoraMensaje.className = 'form-mensaje error';
   } finally {
