@@ -389,19 +389,25 @@ function render() {
       <td class="num">${formatoMoneda(f.iva)}</td>
       <td class="num">${formatoMoneda(f.total)}</td>
       <td class="num">${f.estadoPago === 'abono_parcial' ? `<b>${formatoMoneda(f.saldo)}</b>` : formatoMoneda(f.saldo)}</td>
-      <td class="col-adjunto" title="${f.drivePdf ? 'Documento archivado' : 'Sin documento archivado'}">
+      <td class="col-adjunto" data-col="documento" title="${f.drivePdf ? 'Documento archivado (clic: ver documento)' : 'Sin documento archivado'}">
         <span class="icono-adjunto${f.drivePdf ? ' tiene' : ''}">📎</span>
       </td>
-      <td class="col-contable" title="${f.contabilizado ? 'Contabilizada' : 'Aún no contabilizada'}">
+      <td class="col-contable" data-col="contabilidad" title="${f.contabilizado ? 'Contabilizada' : 'Aún no contabilizada'} (clic: ver contabilidad)">
         <span class="icono-contable ${f.contabilizado ? 'si' : 'no'}">${f.contabilizado ? '✓' : '✗'}</span>
       </td>
       <td>${f.esCredito ? '<span class="badge-credito">Crédito</span>' : '<span class="badge-contado">Contado</span>'}</td>
-      <td><span class="badge-metodo${f.seleccionFormaPago ? '' : ' vacio'}">${escapeHtml(f.seleccionFormaPago ? labelMetodo(f.seleccionFormaPago) : 'Pendiente')}</span></td>
+      <td data-col="metodo" title="Clic: ver el pago"><span class="badge-metodo${f.seleccionFormaPago ? '' : ' vacio'}">${escapeHtml(f.seleccionFormaPago ? labelMetodo(f.seleccionFormaPago) : 'Pendiente')}</span></td>
       <td><span class="badge ${estado.cls}">${estado.label}</span></td>
       <td><button type="button" class="btn-pagar ${f.estadoPago === 'pagada' ? 'ver' : ''}" data-item="${escapeHtml(String(f.item))}">${f.estadoPago === 'pagada' ? 'Ver pago' : 'Abonar'}</button></td>`;
     tr.addEventListener('click', (e) => {
       if (e.target.closest('.chk-factura') || e.target.closest('.btn-pagar')) return;
-      mostrarDetalle(f, { forzarTab: true, tabInicial: 'detalle' });
+      const celda = e.target.closest('td[data-col]');
+      const col = celda ? celda.dataset.col : null;
+      let tabInicial = 'detalle';
+      if (col === 'contabilidad') tabInicial = 'contabilidad';
+      else if (col === 'documento') tabInicial = 'documento';
+      else if (col === 'metodo') tabInicial = f.estadoPago === 'pagada' ? 'detalle' : 'pago';
+      mostrarDetalle(f, { forzarTab: true, tabInicial });
     });
     tr.querySelector('.btn-pagar').addEventListener('click', (e) => {
       e.stopPropagation();
