@@ -14,14 +14,16 @@ const URL_PUC_CATALOGO = `${API_BASE}/hye-puc-catalogo`;
 const URL_CONTABILIDAD_FACTURA = `${API_BASE}/hye-contabilidad-factura`;
 const URL_CONTABILIZAR_AHORA = `${API_BASE}/hye-contabilizar-ahora`;
 const URL_CORREGIR_CODIGO = `${API_BASE}/hye-corregir-codigo`;
+const URL_PUC_AGREGAR = `${API_BASE}/hye-puc-agregar`;
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const METODOS_PAGO = ['Crédito', 'Efectivo', 'Banco Av Villas', 'Banco Davivienda', 'TD Av Villas', 'NEQUI_LE'];
 const METODO_LABELS = { NEQUI_LE: 'Nequi (L.E)' };
 function labelMetodo(m) { return METODO_LABELS[m] || m; }
 
-const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1 };
+const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1, pucFiltroTipo: 'todos', pucPagina: 1 };
 const CONTAB_POR_PAGINA = 25;
+const PUC_POR_PAGINA = 25;
 
 const el = {
   tabla: document.getElementById('tabla-facturas'),
@@ -76,6 +78,17 @@ const el = {
   contabFiltroActivoTexto: document.getElementById('contab-filtro-activo-texto'),
   btnQuitarFiltroActivo: document.getElementById('btn-quitar-filtro-activo'),
   contabPaginacion: document.getElementById('contab-paginacion'),
+
+  btnVerPuc: document.getElementById('btn-ver-puc'),
+  modalPuc: document.getElementById('modal-puc'),
+  btnCerrarPuc: document.getElementById('btn-cerrar-puc'),
+  formAgregarPuc: document.getElementById('form-agregar-puc'),
+  pucAgregarMensaje: document.getElementById('puc-agregar-mensaje'),
+  pucFiltroTipoBtns: document.querySelectorAll('.puc-filtro-tipo'),
+  pucBuscar: document.getElementById('puc-buscar'),
+  pucResumen: document.getElementById('puc-resumen'),
+  pucLista: document.getElementById('puc-lista'),
+  pucPaginacion: document.getElementById('puc-paginacion'),
 
   detalleVacio: document.getElementById('detalle-vacio'),
   panelDetalle: document.getElementById('panel-detalle'),
@@ -1326,6 +1339,126 @@ function renderPaginacionContab(totalPaginas) {
   });
 }
 
+// ===== Pestaña / modal PUC (catálogo de costo + gasto) =====
+
+async function abrirModalPuc() {
+  el.modalPuc.hidden = false;
+  el.pucBuscar.value = '';
+  state.pucFiltroTipo = 'todos';
+  state.pucPagina = 1;
+  el.pucFiltroTipoBtns.forEach((b) => b.classList.toggle('activa', b.dataset.tipo === 'todos'));
+  el.formAgregarPuc.reset();
+  el.pucAgregarMensaje.textContent = '';
+  el.pucAgregarMensaje.className = 'form-mensaje';
+  el.pucResumen.textContent = 'Cargando...';
+  el.pucLista.innerHTML = '';
+  await cargarPucCatalogoSiHaceFalta(true);
+  renderPuc();
+}
+function cerrarModalPuc() {
+  el.modalPuc.hidden = true;
+}
+
+function renderPuc() {
+  const texto = (el.pucBuscar.value || '').toLowerCase().trim();
+  const catalogo = state.pucCatalogo || [];
+  let items = catalogo;
+  if (state.pucFiltroTipo !== 'todos') items = items.filter((c) => c.tipo === state.pucFiltroTipo);
+  if (texto) items = items.filter((c) => `${c.codigo || ''} ${c.nombre || ''} ${c.descripcion || ''}`.toLowerCase().includes(texto));
+
+  const totalCosto = catalogo.filter((c) => c.tipo === 'COSTO').length;
+  const totalGasto = catalogo.filter((c) => c.tipo === 'GASTO').length;
+  el.pucResumen.textContent = `${catalogo.length} cuentas (${totalCosto} costo · ${totalGasto} gasto)${(texto || state.pucFiltroTipo !== 'todos') ? ` · mostrando ${items.length}` : ''}`;
+
+  if (!items.length) {
+    el.pucLista.innerHTML = `<div class="contab-vacio">${texto || state.pucFiltroTipo !== 'todos' ? 'Ninguna cuenta coincide con el filtro.' : 'Todavía no hay cuentas cargadas.'}</div>`;
+    el.pucPaginacion.hidden = true;
+    return;
+  }
+
+  const totalPaginas = Math.max(1, Math.ceil(items.length / PUC_POR_PAGINA));
+  if (state.pucPagina > totalPaginas) state.pucPagina = totalPaginas;
+  if (state.pucPagina < 1) state.pucPagina = 1;
+  const inicio = (state.pucPagina - 1) * PUC_POR_PAGINA;
+  const itemsPagina = items.slice(inicio, inicio + PUC_POR_PAGINA);
+
+  renderPaginacionPuc(totalPaginas);
+
+  el.pucLista.innerHTML = itemsPagina.map((c) => `
+    <div class="puc-fila">
+      <span class="pf-codigo">${escapeHtml(c.codigo || '')}</span>
+      <span class="pf-nombre">${escapeHtml(c.nombre || '')}</span>
+      <span class="pf-concepto">${escapeHtml(c.descripcion || '')}</span>
+      <span class="puc-badge-tipo ${c.tipo === 'GASTO' ? 'gasto' : 'costo'}">${escapeHtml(c.tipo || '')}</span>
+    </div>
+  `).join('');
+}
+
+function renderPaginacionPuc(totalPaginas) {
+  el.pucPaginacion.hidden = totalPaginas <= 1;
+  if (totalPaginas <= 1) { el.pucPaginacion.innerHTML = ''; return; }
+  const paginas = paginasVisibles(totalPaginas, state.pucPagina);
+  el.pucPaginacion.innerHTML = `
+    <button type="button" class="contab-pag-btn" data-pagina="${state.pucPagina - 1}" ${state.pucPagina <= 1 ? 'disabled' : ''}>‹</button>
+    ${paginas.map((p) => p === '…'
+      ? '<span class="contab-pag-puntos">…</span>'
+      : `<button type="button" class="contab-pag-btn${p === state.pucPagina ? ' activa' : ''}" data-pagina="${p}">${p}</button>`
+    ).join('')}
+    <button type="button" class="contab-pag-btn" data-pagina="${state.pucPagina + 1}" ${state.pucPagina >= totalPaginas ? 'disabled' : ''}>›</button>
+  `;
+  el.pucPaginacion.querySelectorAll('.contab-pag-btn:not(:disabled)').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.pucPagina = Number(btn.dataset.pagina);
+      renderPuc();
+      el.pucLista.scrollIntoView({ block: 'nearest' });
+    });
+  });
+}
+
+el.btnVerPuc.addEventListener('click', abrirModalPuc);
+el.btnCerrarPuc.addEventListener('click', cerrarModalPuc);
+el.pucBuscar.addEventListener('input', () => { state.pucPagina = 1; renderPuc(); });
+el.pucFiltroTipoBtns.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    state.pucFiltroTipo = btn.dataset.tipo;
+    state.pucPagina = 1;
+    el.pucFiltroTipoBtns.forEach((b) => b.classList.toggle('activa', b === btn));
+    renderPuc();
+  });
+});
+el.formAgregarPuc.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(el.formAgregarPuc);
+  const payload = {
+    tipo: fd.get('tipo'),
+    codigo: (fd.get('codigo') || '').toString().trim(),
+    nombre: (fd.get('nombre') || '').toString().trim(),
+    descripcion: (fd.get('descripcion') || '').toString().trim(),
+  };
+  if (!payload.codigo || !payload.nombre) return;
+  el.pucAgregarMensaje.textContent = 'Guardando...';
+  el.pucAgregarMensaje.className = 'form-mensaje';
+  try {
+    const res = await fetch(URL_PUC_AGREGAR, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.mensaje || 'No se pudo guardar.');
+    el.pucAgregarMensaje.textContent = 'Cuenta agregada correctamente.';
+    el.pucAgregarMensaje.className = 'form-mensaje ok';
+    el.formAgregarPuc.reset();
+    await cargarPucCatalogoSiHaceFalta(true);
+    state.pucPagina = 1;
+    renderPuc();
+  } catch (err) {
+    console.error(err);
+    el.pucAgregarMensaje.textContent = err.message || 'Error de conexión.';
+    el.pucAgregarMensaje.className = 'form-mensaje error';
+  }
+});
+
 async function abrirModalContabilidad() {
   el.modalContabilidad.hidden = false;
   el.contabBuscar.value = '';
@@ -1354,14 +1487,14 @@ el.btnQuitarFiltroActivo.addEventListener('click', () => {
   renderContabilidad();
 });
 
-async function cargarPucCatalogoSiHaceFalta() {
-  if (state.pucCatalogo) return state.pucCatalogo;
+async function cargarPucCatalogoSiHaceFalta(forzar = false) {
+  if (state.pucCatalogo && !forzar) return state.pucCatalogo;
   try {
     const res = await fetch(URL_PUC_CATALOGO);
     state.pucCatalogo = await res.json();
   } catch (err) {
     console.error(err);
-    state.pucCatalogo = [];
+    state.pucCatalogo = state.pucCatalogo || [];
   }
   return state.pucCatalogo;
 }

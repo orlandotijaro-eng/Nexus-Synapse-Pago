@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-6">
+<link rel="stylesheet" href="style.css?v=2026.09.22-7">
 </head>
 <body>
 <header class="topbar">
@@ -102,6 +102,7 @@
     <span class="toolbar-titulo">Contabilidad</span>
     <div class="toolbar-controles">
       <button id="btn-ver-contabilidad" type="button" class="btn btn-secundario btn-contabilidad" title="Ver todas las facturas ya contabilizadas y el detalle de sus líneas">🧮 Ver contabilización</button>
+      <button id="btn-ver-puc" type="button" class="btn btn-secundario btn-contabilidad" title="Ver y administrar el catálogo de cuentas PUC (costo y gasto)">📚 Ver PUC</button>
     </div>
   </div>
 
@@ -220,6 +221,38 @@
     <input id="contab-buscar" type="search" placeholder="Buscar por proveedor, NIT o número de factura...">
     <div id="contab-lista" class="contab-lista"></div>
     <div id="contab-paginacion" class="contab-paginacion" hidden></div>
+  </div>
+</div>
+
+<div id="modal-puc" class="overlay-lote" hidden>
+  <div class="overlay-lote-panel modal-contabilidad-panel">
+    <div class="contab-head">
+      <h3>📚 Catálogo PUC</h3>
+      <button type="button" id="btn-cerrar-puc" class="btn btn-secundario">✕ Cerrar</button>
+    </div>
+
+    <form id="form-agregar-puc" class="puc-agregar-form">
+      <span class="puc-agregar-titulo">➕ Agregar cuenta</span>
+      <select name="tipo" required>
+        <option value="COSTO">Costo</option>
+        <option value="GASTO">Gasto</option>
+      </select>
+      <input type="text" name="codigo" placeholder="Código" required>
+      <input type="text" name="nombre" placeholder="Nombre de la cuenta" required>
+      <input type="text" name="descripcion" placeholder="Concepto / cuándo usarla">
+      <button type="submit" class="btn btn-primary">Guardar cuenta</button>
+      <span id="puc-agregar-mensaje" class="form-mensaje"></span>
+    </form>
+
+    <div class="puc-filtros">
+      <button type="button" class="puc-filtro-tipo activa" data-tipo="todos">Todos</button>
+      <button type="button" class="puc-filtro-tipo" data-tipo="COSTO">Costo</button>
+      <button type="button" class="puc-filtro-tipo" data-tipo="GASTO">Gasto</button>
+      <input id="puc-buscar" type="search" placeholder="Buscar por código, nombre o concepto...">
+    </div>
+    <p id="puc-resumen" class="contab-resumen">Cargando...</p>
+    <div id="puc-lista" class="puc-lista"></div>
+    <div id="puc-paginacion" class="contab-paginacion" hidden></div>
   </div>
 </div>
 
@@ -534,6 +567,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-6"></script>
+<script src="app.js?v=2026.09.22-7"></script>
 </body>
 </html>
