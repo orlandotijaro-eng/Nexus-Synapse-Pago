@@ -1300,12 +1300,27 @@ function renderContabilidad() {
 
   renderPaginacionContab(totalPaginas);
 
-  el.contabLista.innerHTML = itemsPagina.map((f) => `
+  el.contabLista.innerHTML = itemsPagina.map((f) => {
+    const fp = (state.facturas || []).find((x) => x.cufe === f.cufe) || null;
+    const nombreProveedor = (fp && fp.vendedorNombre) || f.tercero || 'Proveedor sin identificar';
+    const nLineas = f.totalLineas ?? (f.lineas ? f.lineas.length : 0);
+    const estado = fp ? badgeEstado(fp) : null;
+    return `
     <div class="contab-factura${itemsPagina.length === 1 ? ' abierta' : ''}" data-cufe="${escapeHtml(f.cufe || '')}">
       <div class="contab-factura-head">
-        <span class="cf-doc">${escapeHtml(f.prefijo || '')}${escapeHtml(String(f.numero || ''))}</span>
-        <span class="cf-tercero">${escapeHtml(f.tercero || 'Sin nombre')} · NIT ${escapeHtml(String(f.nit || ''))}</span>
-        <span class="cf-meta">${escapeHtml(f.fecha || '')} · ${escapeHtml(String(f.totalLineas ?? (f.lineas ? f.lineas.length : 0)))} línea${(f.totalLineas ?? (f.lineas ? f.lineas.length : 0)) === 1 ? '' : 's'}${f.estadoCarga ? ` · ${escapeHtml(f.estadoCarga)}` : ''}</span>
+        <div class="cf-col cf-col-doc">
+          <span class="cf-doc">${escapeHtml(f.prefijo || '')}${escapeHtml(String(f.numero || ''))}</span>
+          <span class="cf-lineas">${nLineas} línea${nLineas === 1 ? '' : 's'}</span>
+        </div>
+        <div class="cf-col cf-col-proveedor">
+          <span class="cf-nombre">${escapeHtml(nombreProveedor)}</span>
+          <span class="cf-nit">NIT ${escapeHtml(String(f.nit || ''))}</span>
+        </div>
+        <div class="cf-col cf-col-datos">
+          <span class="cf-fecha">${escapeHtml(f.fecha || '')}</span>
+          ${fp ? `<span class="cf-valor">${formatoMoneda(fp.total)}</span>` : ''}
+        </div>
+        ${estado ? `<span class="badge ${estado.cls}">${estado.label}</span>` : '<span class="badge pendiente">' + escapeHtml(f.estadoCarga || 'PENDIENTE') + '</span>'}
         <span class="cf-flecha">›</span>
       </div>
       <div class="contab-lineas-wrap">
@@ -1326,7 +1341,8 @@ function renderContabilidad() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   el.contabLista.querySelectorAll('.contab-factura-head').forEach((head) => {
     head.addEventListener('click', () => head.closest('.contab-factura').classList.toggle('abierta'));
@@ -1746,11 +1762,14 @@ function renderContabTodo() {
     renderContabTodo();
   });
 
-  el.contabTodoBody.innerHTML = pagina.map((f) => `
+  el.contabTodoBody.innerHTML = pagina.map((f) => {
+    const fp = (state.facturas || []).find((x) => x.cufe === f.clave) || null;
+    const nombreProveedor = fp && fp.vendedorNombre ? `${fp.vendedorNombre} · ` : '';
+    return `
     <tr>
       <td>${escapeHtml(f.fecha || '')}</td>
       <td><a href="#" class="todo-doc-link" data-clave="${escapeHtml(f.clave || '')}" title="Ver y editar esta factura en 'Por factura'">${escapeHtml(f.prefijo || '')}${escapeHtml(String(f.numero || ''))}</a></td>
-      <td>${escapeHtml(String(f.terceroExterno || ''))}</td>
+      <td title="${escapeHtml(nombreProveedor)}">${escapeHtml(nombreProveedor)}${escapeHtml(String(f.terceroExterno || ''))}</td>
       <td>${escapeHtml(f.nota || '')}</td>
       <td>${escapeHtml(String(f.codigoInventario || ''))}</td>
       <td class="num">${escapeHtml(String(f.cantidad ?? ''))}</td>
@@ -1770,7 +1789,8 @@ function renderContabTodo() {
       <td>${f.linkPdf ? `<a href="${escapeHtml(f.linkPdf)}" target="_blank" rel="noopener">PDF</a>` : '—'}</td>
       <td>${f.linkXml ? `<a href="${escapeHtml(f.linkXml)}" target="_blank" rel="noopener">XML</a>` : '—'}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   el.contabTodoBody.querySelectorAll('.todo-doc-link').forEach((a) => {
     a.addEventListener('click', (e) => {

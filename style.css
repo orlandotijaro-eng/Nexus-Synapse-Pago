@@ -421,13 +421,31 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .puc-badge-tipo.gasto { background: var(--credito-bg); color: var(--credito); }
 .contab-lista { display: flex; flex-direction: column; gap: 10px; }
 .contab-vacio { text-align: center; padding: 36px 12px; color: var(--text-muted); }
-.contab-factura { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.contab-factura-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; background: var(--contab-bg); cursor: pointer; }
-.contab-factura-head .cf-doc { font-weight: 800; color: var(--contab); }
-.contab-factura-head .cf-tercero { color: var(--text); font-size: 0.85rem; }
-.contab-factura-head .cf-meta { color: var(--text-muted); font-size: 0.78rem; }
-.contab-factura-head .cf-flecha { transition: transform 0.15s; color: var(--contab); }
+.contab-factura { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--card-bg); box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: box-shadow 0.15s; }
+.contab-factura:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+.contab-factura-head {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) minmax(0, 2fr) minmax(90px, auto) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border-left: 4px solid var(--contab);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.contab-factura-head:hover { background: var(--contab-bg); }
+.contab-factura-head .cf-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.contab-factura-head .cf-doc { font-weight: 800; color: var(--contab); font-size: 0.92rem; white-space: nowrap; }
+.contab-factura-head .cf-lineas { font-size: 0.68rem; color: var(--text-muted); }
+.contab-factura-head .cf-nombre { font-weight: 700; color: var(--text); font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contab-factura-head .cf-nit { font-size: 0.72rem; color: var(--text-muted); }
+.contab-factura-head .cf-col-datos { align-items: flex-end; text-align: right; }
+.contab-factura-head .cf-fecha { font-size: 0.74rem; color: var(--text-muted); }
+.contab-factura-head .cf-valor { font-weight: 800; color: var(--text); font-size: 0.9rem; white-space: nowrap; }
+.contab-factura-head .cf-flecha { transition: transform 0.15s; color: var(--contab); font-size: 1.1rem; }
 .contab-factura.abierta .cf-flecha { transform: rotate(90deg); }
+.contab-factura.abierta .contab-factura-head { border-left-color: var(--ok); }
 .contab-lineas-wrap { display: none; padding: 0; }
 .contab-factura.abierta .contab-lineas-wrap { display: block; }
 .contab-lineas { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
@@ -534,6 +552,12 @@ legend { font-size: 0.72rem; font-weight: 700; padding: 0 4px; color: var(--cred
   .panel-detalle { height: 60vh; }
   .resizer { display: none !important; }
   .resumen-bar { display: none; }
+  .contab-factura-head { grid-template-columns: 1fr auto; grid-template-areas: "doc estado" "prov prov" "datos flecha"; }
+  .contab-factura-head .cf-col-doc { grid-area: doc; }
+  .contab-factura-head .badge { grid-area: estado; justify-self: end; }
+  .contab-factura-head .cf-col-proveedor { grid-area: prov; }
+  .contab-factura-head .cf-col-datos { grid-area: datos; align-items: flex-start; text-align: left; }
+  .contab-factura-head .cf-flecha { grid-area: flecha; justify-self: end; }
 }
 
 .det-retenciones-detalle { margin: 0 0 8px; font-size: 0.72rem; color: var(--text-muted); }
