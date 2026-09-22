@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-19">
+<link rel="stylesheet" href="style.css?v=2026.09.22-20">
 </head>
 <body>
 <header class="topbar">
@@ -87,6 +87,9 @@
       <label class="btn btn-secundario btn-cargar-zip" title="Para ZIPs cuyo nombre de archivo es el CUFE de una factura ya existente en la hoja">
         🗂️ Masivo (ZIP = CUFE)
         <input type="file" id="input-zip-masivo" accept=".zip" multiple hidden>
+      </label>
+      <label class="chk-contabilizar-masivo" title="Desmárcalo si este lote es solo para actualizar datos/archivos en la hoja, sin que dispare la contabilización">
+        <input type="checkbox" id="chk-contabilizar-masivo" checked> Contabilizar también
       </label>
       <button id="btn-refrescar" class="btn btn-secundario" title="Actualizar listado">⟳ Actualizar</button>
     </div>
@@ -603,6 +606,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-19"></script>
+<script src="app.js?v=2026.09.22-20"></script>
 </body>
 </html>

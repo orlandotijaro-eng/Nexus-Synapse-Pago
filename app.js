@@ -43,6 +43,7 @@ const el = {
   btnRefrescar: document.getElementById('btn-refrescar'),
   inputZipDoc: document.getElementById('input-zip-doc'),
   inputZipMasivo: document.getElementById('input-zip-masivo'),
+  chkContabilizarMasivo: document.getElementById('chk-contabilizar-masivo'),
   zipMensaje: document.getElementById('zip-mensaje'),
   overlayLote: document.getElementById('overlay-lote'),
   overlayLoteTitulo: document.getElementById('overlay-lote-titulo'),
@@ -993,9 +994,12 @@ function mostrarMensajeZip(texto, tipo) {
   el.zipMensaje.hidden = false;
 }
 
-async function subirUnZip(archivo, url, signal, campo = 'comprobante') {
+async function subirUnZip(archivo, url, signal, campo = 'comprobante', extra = null) {
   const fd = new FormData();
   fd.append(campo, archivo);
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) fd.append(k, v);
+  }
   try {
     const res = await fetch(url, { method: 'POST', body: fd, signal });
     const data = await res.json().catch(() => ({}));
@@ -1046,7 +1050,34 @@ el.btnLoteCancelar.addEventListener('click', () => {
   if (control.abortController) control.abortController.abort();
 });
 
-async function procesarLoteZip(archivos, url, campo = 'comprobante') {
+// Cada documento dispara su propia contabilización en el servidor, que tarda
+// ~90s (1.5 min) internamente. Si se sueltan muchos documentos seguidos, esas
+// contabilizaciones se amontonan y saturan la cuota de Sheets/el motor de IA
+// (confirmado: con 168 de golpe, la mayoría se quedó sin procesar). Por eso el
+// frontend espera este tiempo entre un documento y el siguiente del mismo lote,
+// para que cada contabilización tenga espacio de terminar antes de que llegue
+// la próxima.
+const ESPERA_ENTRE_DOCUMENTOS_MS = 90000;
+
+function esperarConCuentaRegresiva(control, ms) {
+  return new Promise((resolve) => {
+    const fin = Date.now() + ms;
+    const tick = () => {
+      if (control.cancelado) { resolve(); return; }
+      if (control.pausado) { setTimeout(tick, 300); return; }
+      const restante = Math.max(0, fin - Date.now());
+      const seg = Math.ceil(restante / 1000);
+      el.overlayLoteDocPaso.textContent = seg > 0
+        ? `⏳ Esperando ${seg}s antes del siguiente documento (para no saturar la contabilización)...`
+        : '';
+      if (restante <= 0) { resolve(); return; }
+      setTimeout(tick, 500);
+    };
+    tick();
+  });
+}
+
+async function procesarLoteZip(archivos, url, campo = 'comprobante', extra = null) {
   const errores = [];
   let exitosos = 0;
   let procesados = 0;
@@ -1078,7 +1109,7 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante') {
       }, 300);
 
       control.abortController = new AbortController();
-      const resultado = await subirUnZip(archivo, url, control.abortController.signal, campo);
+      const resultado = await subirUnZip(archivo, url, control.abortController.signal, campo, extra);
       control.abortController = null;
       clearInterval(intervaloDoc);
 
@@ -1099,6 +1130,10 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante') {
         errores.push(`${archivo.name}: ${resultado.mensaje}`);
       }
       actualizarOverlayLote({ actual: procesados, total: archivos.length, texto: '' });
+
+      if (i < archivos.length - 1 && !control.cancelado) {
+        await esperarConCuentaRegresiva(control, ESPERA_ENTRE_DOCUMENTOS_MS);
+      }
     }
   } finally {
     el.overlayLote.hidden = true;
@@ -1128,7 +1163,8 @@ el.inputZipMasivo.addEventListener('change', async (e) => {
   const archivos = Array.from(e.target.files || []);
   e.target.value = '';
   if (!archivos.length) return;
-  await procesarLoteZip(archivos, URL_BACKFILL_MASIVO);
+  const contabilizar = el.chkContabilizarMasivo.checked;
+  await procesarLoteZip(archivos, URL_BACKFILL_MASIVO, 'comprobante', { contabilizar: contabilizar ? 'true' : 'false' });
 });
 
 el.inputInformalIa.addEventListener('change', async (e) => {
