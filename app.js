@@ -49,6 +49,8 @@ const el = {
   overlayLoteBarra: document.getElementById('overlay-lote-barra'),
   overlayLoteContador: document.getElementById('overlay-lote-contador'),
   overlayLoteTexto: document.getElementById('overlay-lote-texto'),
+  overlayLoteDocBarra: document.getElementById('overlay-lote-doc-barra'),
+  overlayLoteDocPaso: document.getElementById('overlay-lote-doc-paso'),
   overlayLoteResultado: document.getElementById('overlay-lote-resultado'),
   btnLotePausar: document.getElementById('btn-lote-pausar'),
   btnLoteCancelar: document.getElementById('btn-lote-cancelar'),
@@ -1064,11 +1066,31 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante') {
 
       const archivo = archivos[i];
       actualizarOverlayLote({ actual: i, total: archivos.length, texto: `Procesando: ${archivo.name}...` });
+
+      el.overlayLoteDocBarra.style.width = '0%';
+      el.overlayLoteDocBarra.classList.remove('completa');
+      el.overlayLoteDocPaso.textContent = '';
+      const inicioDoc = Date.now();
+      const intervaloDoc = setInterval(() => {
+        const { pct, texto } = pctYTextoLoteDoc(Date.now() - inicioDoc);
+        el.overlayLoteDocBarra.style.width = `${pct}%`;
+        el.overlayLoteDocPaso.textContent = texto;
+      }, 300);
+
       control.abortController = new AbortController();
       const resultado = await subirUnZip(archivo, url, control.abortController.signal, campo);
       control.abortController = null;
+      clearInterval(intervaloDoc);
 
-      if (resultado.cancelado) break;
+      if (resultado.cancelado) { el.overlayLoteDocPaso.textContent = 'Cancelado.'; break; }
+
+      el.overlayLoteDocBarra.style.width = '100%';
+      if (resultado.ok) {
+        el.overlayLoteDocBarra.classList.add('completa');
+        el.overlayLoteDocPaso.textContent = '✓ Registrado · contabilizando en segundo plano';
+      } else {
+        el.overlayLoteDocPaso.textContent = `✗ ${resultado.mensaje}`;
+      }
 
       procesados = i + 1;
       if (resultado.ok) {
@@ -1915,23 +1937,16 @@ function renderContabLineasEditable(data) {
   el.contabGuardarMensaje.className = 'form-mensaje';
 }
 
-// Etapas aproximadas del proceso real (Buscar factura -> bajar PDF/XML de Drive ->
-// esperar ~90s a que el motor registre -> IA clasifica y registra). No hay progreso
-// real segundo a segundo (es una sola llamada sincrónica), así que se simula el
-// avance contra el tiempo transcurrido para que el usuario vea que algo se mueve
-// y sepa aproximadamente en qué va, en vez de una pantalla congelada.
-const ETAPAS_CONTABILIZAR = [
-  { hasta: 4000, pct: 4, texto: 'Buscando la factura...' },
-  { hasta: 12000, pct: 12, texto: 'Descargando el PDF y el XML ya archivados...' },
-  { hasta: 100000, pct: 85, texto: 'Esperando que el sistema registre los datos...' },
-  { hasta: 130000, pct: 94, texto: 'Clasificando con inteligencia artificial...' },
-  { hasta: Infinity, pct: 96, texto: 'Terminando de registrar, ya casi...' },
-];
-function pctYTextoContabilizar(elapsedMs) {
-  for (let i = 0; i < ETAPAS_CONTABILIZAR.length; i++) {
-    const etapa = ETAPAS_CONTABILIZAR[i];
+// Simulador genérico de progreso: como estas llamadas son una sola petición
+// sincrónica (sin progreso real punto a punto del servidor), se calcula un
+// avance aproximado contra el tiempo transcurrido, con texto de la etapa en
+// la que probablemente va, para que el usuario vea que algo se mueve y sepa
+// más o menos en qué va, en vez de una pantalla congelada con un solo mensaje.
+function calcularEtapaProgreso(etapas, elapsedMs) {
+  for (let i = 0; i < etapas.length; i++) {
+    const etapa = etapas[i];
     if (elapsedMs <= etapa.hasta) {
-      const anterior = ETAPAS_CONTABILIZAR[i - 1];
+      const anterior = etapas[i - 1];
       const pctDesde = anterior ? anterior.pct : 0;
       const msDesde = anterior ? anterior.hasta : 0;
       const frac = etapa.hasta === Infinity ? 1 : (elapsedMs - msDesde) / (etapa.hasta - msDesde);
@@ -1939,8 +1954,35 @@ function pctYTextoContabilizar(elapsedMs) {
       return { pct, texto: etapa.texto };
     }
   }
-  return { pct: 96, texto: 'Terminando de registrar, ya casi...' };
+  const ultima = etapas[etapas.length - 1];
+  return { pct: ultima.pct, texto: ultima.texto };
 }
+
+// Etapas de "Contabilizar ahora": Buscar factura -> bajar PDF/XML de Drive ->
+// esperar ~90s a que el motor registre -> IA clasifica y registra.
+const ETAPAS_CONTABILIZAR = [
+  { hasta: 4000, pct: 4, texto: 'Buscando la factura...' },
+  { hasta: 12000, pct: 12, texto: 'Descargando el PDF y el XML ya archivados...' },
+  { hasta: 100000, pct: 85, texto: 'Esperando que el sistema registre los datos...' },
+  { hasta: 130000, pct: 94, texto: 'Clasificando con inteligencia artificial...' },
+  { hasta: Infinity, pct: 96, texto: 'Terminando de registrar, ya casi...' },
+];
+function pctYTextoContabilizar(elapsedMs) { return calcularEtapaProgreso(ETAPAS_CONTABILIZAR, elapsedMs); }
+
+// Etapas de la carga de UN documento dentro de un lote masivo (Doc/ZIP):
+// subir el comprobante -> descomprimir y leer el XML -> revisar si ya existe
+// en la hoja -> subir PDF/XML a Drive (si es nuevo) -> registrar en la hoja.
+// La contabilización de ese documento se dispara en paralelo en el servidor
+// y no se espera aquí (por eso no forma parte de estas etapas).
+const ETAPAS_LOTE_DOC = [
+  { hasta: 1000, pct: 8, texto: 'Subiendo el comprobante...' },
+  { hasta: 3500, pct: 28, texto: 'Descomprimiendo y leyendo el XML...' },
+  { hasta: 6000, pct: 45, texto: 'Verificando si ya existe en la hoja...' },
+  { hasta: 14000, pct: 78, texto: 'Subiendo PDF y XML a Drive...' },
+  { hasta: 20000, pct: 92, texto: 'Registrando en la hoja...' },
+  { hasta: Infinity, pct: 94, texto: 'Terminando...' },
+];
+function pctYTextoLoteDoc(elapsedMs) { return calcularEtapaProgreso(ETAPAS_LOTE_DOC, elapsedMs); }
 
 el.btnContabilizarAhora.addEventListener('click', async () => {
   const cufe = state.contabFacturaCufe;
