@@ -1,7 +1,7 @@
 :root {
-  --navy: #14532d;
-  --steel: #16a34a;
-  --steel-light: #e6f4ea;
+  --navy: #1e3a8a;
+  --steel: #1d4ed8;
+  --steel-light: #e6eefc;
   --bg: #f4f6fa;
   --card-bg: #ffffff;
   --text: #1f2937;
@@ -32,7 +32,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --navy: #4ade80; --steel: #22c55e; --steel-light: rgba(34, 197, 94, 0.16);
+    --navy: #60a5fa; --steel: #3b82f6; --steel-light: rgba(59, 130, 246, 0.16);
     --bg: #0f1420; --card-bg: #171d2b; --text: #e7ebf3; --text-muted: #8b93a7;
     --border: #2a3244; --credito: #e0b13e; --credito-bg: rgba(224, 177, 62, 0.14);
     --credito-row: rgba(63, 199, 137, 0.10); --credito-row-border: #3fc789;
@@ -45,7 +45,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --navy: #4ade80; --steel: #22c55e; --steel-light: rgba(34, 197, 94, 0.16);
+  --navy: #60a5fa; --steel: #3b82f6; --steel-light: rgba(59, 130, 246, 0.16);
   --bg: #0f1420; --card-bg: #171d2b; --text: #e7ebf3; --text-muted: #8b93a7;
   --border: #2a3244; --credito: #e0b13e; --credito-bg: rgba(224, 177, 62, 0.14);
   --credito-row: rgba(63, 199, 137, 0.10); --credito-row-border: #3fc789;
@@ -216,7 +216,9 @@ table.tabla-facturas thead th:nth-child(10) { background: var(--pend); }
 table.tabla-facturas thead th.ordenable { cursor: pointer; user-select: none; }
 table.tabla-facturas thead th.ordenable:hover { filter: brightness(1.15); }
 table.tabla-facturas thead th .flecha { opacity: 0.9; font-size: 0.6rem; margin-left: 2px; }
-table.tabla-facturas td { padding: 5px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.tabla-facturas td { padding: 5px 10px; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, #94a3b8); border-right: 1px solid color-mix(in srgb, var(--border) 60%, #94a3b8); white-space: nowrap; }
+table.tabla-facturas th { border-right: 1px solid rgba(255,255,255,0.25); }
+table.tabla-facturas td:last-child, table.tabla-facturas th:last-child { border-right: none; }
 table.tabla-facturas td.wrap { white-space: normal; max-width: 260px; }
 table.tabla-facturas tr.item-factura { cursor: pointer; }
 table.tabla-facturas tr.item-factura.metodo-0 { background: var(--metodo-0); }
@@ -258,6 +260,8 @@ table.tabla-facturas tr.item-factura.credito td:first-child { box-shadow: inset 
 .barra-seleccion .btn-secundario { background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.35); }
 
 .lote-lineas { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.aplicar-nc-lista { max-height: 320px; overflow-y: auto; }
+#aplicar-nc-buscar { width: 100%; padding: 8px 10px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; }
 .lote-linea {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--bg);
@@ -750,12 +754,12 @@ table.tabla-facturas td:first-child { font-weight: 800; }
 .banner-acerca { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.55); box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
 
 /* ================= Módulos del menú: color pleno ================= */
-.toolbar { background: linear-gradient(180deg, color-mix(in srgb, #1d4ed8 10%, var(--card-bg)), var(--card-bg)); border-bottom: 2px solid color-mix(in srgb, #1d4ed8 40%, var(--border)); }
-.toolbar-grupo { --mod: #15803d; border: 2px solid color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); box-shadow: 0 4px 12px color-mix(in srgb, var(--mod) 40%, transparent); }
-.toolbar-grupo:nth-child(1) { --mod: #15803d; }
-.toolbar-grupo:nth-child(2) { --mod: #d97706; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
-.toolbar-grupo:nth-child(3) { --mod: #dc2626; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
-.toolbar-grupo:nth-child(4) { --mod: #0d9488; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
+.toolbar { background: var(--card-bg); border-bottom: 3px solid #f59e0b; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.toolbar-grupo { --mod: #1d4ed8; border: 2px solid color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); box-shadow: 0 4px 12px color-mix(in srgb, var(--mod) 40%, transparent); }
+.toolbar-grupo:nth-child(1) { --mod: #1d4ed8; }
+.toolbar-grupo:nth-child(2) { --mod: #7c3aed; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
+.toolbar-grupo:nth-child(3) { --mod: #0d9488; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
+.toolbar-grupo:nth-child(4) { --mod: #d97706; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
 .toolbar-grupo-contabilidad { --mod: #4338ca; border-color: color-mix(in srgb, var(--mod) 70%, #000); background: linear-gradient(160deg, color-mix(in srgb, var(--mod) 100%, #000 18%), var(--mod)); }
 .toolbar-grupo .toolbar-titulo, .toolbar-grupo:nth-child(n) .toolbar-titulo { background: #fff; color: var(--mod); font-size: 0.7rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 .toolbar-grupo .btn-secundario { background: #fff; color: var(--mod); border: 0; font-weight: 800; box-shadow: 0 2px 6px rgba(0,0,0,0.22); }

@@ -16,13 +16,18 @@ const URL_CONTABILIDAD_TODO = `${API_BASE}/hye-contabilidad-todo`;
 const URL_CONTABILIZAR_AHORA = `${API_BASE}/hye-contabilizar-ahora`;
 const URL_CORREGIR_CODIGO = `${API_BASE}/hye-corregir-codigo`;
 const URL_PUC_AGREGAR = `${API_BASE}/hye-puc-agregar`;
+const URL_APLICAR_NOTA_CREDITO = `${API_BASE}/hye-aplicar-nota-credito`;
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const METODOS_PAGO = ['Crédito', 'Efectivo', 'Banco Av Villas', 'Banco Davivienda', 'TD Av Villas', 'NEQUI_LE'];
 const METODO_LABELS = { NEQUI_LE: 'Nequi (L.E)' };
 function labelMetodo(m) { return METODO_LABELS[m] || m; }
+function referenciaFactura(cufe) {
+  const f = state.facturas.find((x) => x.cufe === cufe);
+  return f ? `${f.nroFactura || ''} (${f.vendedorNombre || ''})` : cufe;
+}
 
-const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1, pucFiltroTipo: 'todos', pucPagina: 1, contabSubtab: 'factura', contabilidadTodo: null, contabTodoMes: null, contabTodoPagina: 1, contabMes: null };
+const state = { facturas: [], filtroTexto: '', filtroEstado: 'todas', filtroMes: 'todos', filtroCredito: false, filtroMetodo: 'todos', filtroTipoDocumento: 'todos', itemActivo: null, ordenarPor: 'fechaEmision', ordenDireccion: -1, seleccionadas: new Set(), abonosActivos: [], modificando: null, valorPagadoEditado: false, retExistente: { rtf: 0, ica: 0 }, contabilidad: [], pucCatalogo: null, contabFacturaCufe: null, contabFiltroActivoCufe: null, contabPagina: 1, pucFiltroTipo: 'todos', pucPagina: 1, contabSubtab: 'factura', contabilidadTodo: null, contabTodoMes: null, contabTodoPagina: 1, contabMes: null, ncOrigen: null };
 const CONTAB_POR_PAGINA = 25;
 const PUC_POR_PAGINA = 25;
 const CONTAB_TODO_POR_PAGINA = 40;
@@ -154,7 +159,14 @@ const el = {
 
   contabFacturaCargando: document.getElementById('contab-factura-cargando'),
   contabFacturaVacia: document.getElementById('contab-factura-vacia'),
+  contabFacturaVaciaTexto: document.getElementById('contab-factura-vacia-texto'),
   btnContabilizarAhora: document.getElementById('btn-contabilizar-ahora'),
+  modalAplicarNc: document.getElementById('modal-aplicar-nc'),
+  aplicarNcOrigen: document.getElementById('aplicar-nc-origen'),
+  aplicarNcBuscar: document.getElementById('aplicar-nc-buscar'),
+  aplicarNcLista: document.getElementById('aplicar-nc-lista'),
+  aplicarNcMensaje: document.getElementById('aplicar-nc-mensaje'),
+  btnCerrarAplicarNc: document.getElementById('btn-cerrar-aplicar-nc'),
   contabilizarAhoraMensaje: document.getElementById('contabilizar-ahora-mensaje'),
   contabilizarAhoraProgreso: document.getElementById('contabilizar-ahora-progreso'),
   contabilizarAhoraBarra: document.getElementById('contabilizar-ahora-barra'),
@@ -235,7 +247,10 @@ function filasPagosHtml(f, pagos, neto) {
     let saldo = Math.round((neto - acumulado) * 100) / 100;
     if (saldo < 1) saldo = 0;
     const nombre = `${ORDINALES[i] || `${i + 1}.º`} pago`;
-    return `<tr class="cp-pago"><th>${nombre}<small>${escapeHtml(p.fecha || '')} · ${escapeHtml(labelMetodo(p.formaDePago) || '')}</small><small>${p.driveLinkComprobante ? `<a href="${escapeHtml(p.driveLinkComprobante)}" target="_blank" rel="noopener">Ver soporte ↗</a>` : 'Sin soporte'}</small></th><td class="num">${formatoMoneda2(p.valorAbonado)}</td><td class="tar">Saldo <b>${formatoMoneda2(saldo)}</b></td></tr>`;
+    const soporteHtml = p.referenciaNotaCredito
+      ? `<a href="#" class="link-ver-nc" data-cufe="${escapeHtml(p.referenciaNotaCredito)}">Ver nota crédito ↗</a>`
+      : (p.driveLinkComprobante ? `<a href="${escapeHtml(p.driveLinkComprobante)}" target="_blank" rel="noopener">Ver soporte ↗</a>` : 'Sin soporte');
+    return `<tr class="cp-pago"><th>${nombre}<small>${escapeHtml(p.fecha || '')} · ${escapeHtml(labelMetodo(p.formaDePago) || '')}</small><small>${soporteHtml}</small></th><td class="num">${formatoMoneda2(p.valorAbonado)}</td><td class="tar">Saldo <b>${formatoMoneda2(saldo)}</b></td></tr>`;
   }).join('');
   return `<tr class="cp-pagos-tit"><th colspan="3">Pagos realizados</th></tr>${filas}`;
 }
@@ -247,6 +262,7 @@ function cuadroPagoHtml(f, pagos = []) {
   const rtIca = Number(f.rtIca) || 0;
   const rtIva = Number(f.rtIva) || 0;
   const neto = Math.round(((Number(f.total) || 0) - rtf - rtIca - rtIva) * 100) / 100;
+  const inc = Math.round(((Number(f.total) || 0) - base - iva) * 100) / 100;
   const pctIva = base > 0 ? `${Math.round((iva / base) * 10000) / 100}%` : '—';
   const pctRtIva = iva > 0 && rtIva > 0 ? `${Math.round((rtIva / iva) * 10000) / 100}%` : '0%';
   const tipoRtf = String(f.retencionFuenteTipo || '').toLowerCase().startsWith('no') ? '' : (f.retencionFuenteTipo || '');
@@ -258,6 +274,7 @@ function cuadroPagoHtml(f, pagos = []) {
     <tbody>
       ${fila('cp-base', 'Base', formatoMoneda2(base), '')}
       ${fila('cp-iva', 'IVA', formatoMoneda2(iva), pctIva)}
+      ${inc > 0.01 ? fila('cp-inc', 'INC', formatoMoneda2(inc), '') : ''}
       ${fila('cp-bruto', 'Total bruto', formatoMoneda2(f.total), '')}
       ${fila('cp-rtf', 'RT-Fuente', formatoMoneda2(rtf), tarifaRtf)}
       ${fila('cp-ica', 'RT-ICA', formatoMoneda2(rtIca), tarifaIca)}
@@ -381,6 +398,7 @@ function render() {
   for (const f of items) {
     const estado = badgeEstado(f);
     const seleccionada = state.seleccionadas.has(String(f.item));
+    const esNota = (f.documento || '').toUpperCase().includes('NOTA');
     const tr = document.createElement('tr');
     tr.className = 'item-factura ' + claseMetodo(f.seleccionFormaPago) + (f.esCredito ? ' credito' : '') + (String(f.item) === String(state.itemActivo) ? ' activo' : '');
     tr.innerHTML = `
@@ -402,7 +420,11 @@ function render() {
       <td>${f.esCredito ? '<span class="badge-credito">Crédito</span>' : '<span class="badge-contado">Contado</span>'}</td>
       <td data-col="metodo" title="Clic: ver el pago"><span class="badge-metodo${f.seleccionFormaPago ? '' : ' vacio'}">${escapeHtml(f.seleccionFormaPago ? labelMetodo(f.seleccionFormaPago) : 'Pendiente')}</span></td>
       <td><span class="badge ${estado.cls}">${estado.label}</span></td>
-      <td><button type="button" class="btn-pagar ${f.estadoPago === 'pagada' ? 'ver' : ''}" data-item="${escapeHtml(String(f.item))}">${f.estadoPago === 'pagada' ? 'Ver pago' : 'Abonar'}</button></td>`;
+      <td>${esNota
+        ? (f.notaCreditoAplicadaA
+          ? `<span class="badge-metodo" title="Aplicada a ${escapeHtml(referenciaFactura(f.notaCreditoAplicadaA))}">✓ Aplicada</span>`
+          : `<button type="button" class="btn-pagar btn-aplicar-nc-fila" data-item="${escapeHtml(String(f.item))}">🔗 Aplicar</button>`)
+        : `<button type="button" class="btn-pagar ${f.estadoPago === 'pagada' ? 'ver' : ''}" data-item="${escapeHtml(String(f.item))}">${f.estadoPago === 'pagada' ? 'Ver pago' : 'Abonar'}</button>`}</td>`;
     tr.addEventListener('click', (e) => {
       if (e.target.closest('.chk-factura') || e.target.closest('.btn-pagar')) return;
       const celda = e.target.closest('td[data-col]');
@@ -413,10 +435,18 @@ function render() {
       else if (col === 'metodo') tabInicial = f.estadoPago === 'pagada' ? 'detalle' : 'pago';
       mostrarDetalle(f, { forzarTab: true, tabInicial });
     });
-    tr.querySelector('.btn-pagar').addEventListener('click', (e) => {
-      e.stopPropagation();
-      mostrarDetalle(f, { forzarTab: true, tabInicial: f.estadoPago === 'pagada' ? 'detalle' : 'pago' });
-    });
+    const btnAplicarNcFila = tr.querySelector('.btn-aplicar-nc-fila');
+    if (btnAplicarNcFila) {
+      btnAplicarNcFila.addEventListener('click', (e) => {
+        e.stopPropagation();
+        abrirModalAplicarNC(f);
+      });
+    } else if (!esNota) {
+      tr.querySelector('.btn-pagar').addEventListener('click', (e) => {
+        e.stopPropagation();
+        mostrarDetalle(f, { forzarTab: true, tabInicial: f.estadoPago === 'pagada' ? 'detalle' : 'pago' });
+      });
+    }
     tr.querySelector('.chk-factura').addEventListener('change', (e) => {
       const key = String(f.item);
       if (e.target.checked) state.seleccionadas.add(key);
@@ -494,6 +524,7 @@ function mostrarDetalle(factura, { forzarTab, tabInicial = 'detalle' }) {
   state.valorPagadoEditado = false;
   state.modificando = null;
   mostrarAvisoModificando(false);
+  el.formPago.elements.fechaPago.value = new Date().toISOString().slice(0, 10);
   el.formPago.elements.valorPagado.value = factura.saldo || 0;
   el.formPago.elements.valorRetencionFuente.value = 0;
   el.formPago.elements.valorIca.value = 0;
@@ -606,6 +637,7 @@ function iniciarModificar(a) {
   const activoIca = (x) => tasaIca(x.tarifaIca) > 0;
   const otros = state.abonosActivos.filter((x) => String(x.idAbono) !== String(a.idAbono));
   el.formPago.querySelectorAll('option[data-custom="1"]').forEach((o) => o.remove());
+  f.fechaPago.value = a.fecha || new Date().toISOString().slice(0, 10);
   f.formaDePago.value = a.formaDePago || '';
   const exRtf = Number(factura.rtf) || 0;
   const exIca = Number(factura.rtIca) || 0;
@@ -776,7 +808,8 @@ function cargarRetencionesExistentes(factura) {
   f.valorIca.value = ica;
   fijarTarifaRetencion(rtf > 0 ? redondear2((rtf / base) * 100) : 0);
   fijarTarifaIca(ica > 0 ? redondear2((ica / base) * 1000) : 0);
-  if (!(rtf > 0)) marcarTipoRetencion('No aplica');
+  if (rtf > 0) marcarTipoRetencion(factura.retencionFuenteTipo || 'Compras');
+  else marcarTipoRetencion('No aplica');
   sugerirValorPagado();
   el.pagoBaseHint.textContent = `Esta factura ya trae retenciones (Retefuente ${formatoMoneda2(rtf)} · ICA ${formatoMoneda2(ica)}). Se cargaron con la tarifa calculada (valor ÷ base). Verifica, corrige si hace falta y confirma.`;
 }
@@ -1297,6 +1330,7 @@ function abrirModalPagoLote() {
   `).join('');
 
   el.formPagoLote.reset();
+  el.formPagoLote.elements.fechaPago.value = new Date().toISOString().slice(0, 10);
   el.lotePagoMensaje.textContent = '';
   el.lotePagoMensaje.className = 'form-mensaje';
   el.modalPagoLote.hidden = false;
@@ -1976,12 +2010,25 @@ async function cargarContabilidadFactura(factura) {
   el.contabilizarAhoraMensaje.textContent = '';
   el.contabilizarAhoraMensaje.className = 'form-mensaje';
 
+  const esNota = (factura.documento || '').toUpperCase().includes('NOTA');
+
   if (!factura.cufe) {
     el.contabFacturaCargando.hidden = true;
     el.contabFacturaVacia.hidden = false;
     el.btnContabilizarAhora.hidden = true;
     return;
   }
+
+  if (esNota) {
+    el.contabFacturaCargando.hidden = true;
+    el.contabFacturaVacia.hidden = false;
+    el.contabFacturaVaciaTexto.textContent = factura.notaCreditoAplicadaA
+      ? `Este documento es una nota crédito, ya aplicada a la factura ${referenciaFactura(factura.notaCreditoAplicadaA)}.`
+      : 'Este documento es una nota crédito/débito, no se contabiliza como una factura normal. Usa el botón "🔗 Aplicar" en el listado para aplicarla a una factura.';
+    el.btnContabilizarAhora.hidden = true;
+    return;
+  }
+  el.contabFacturaVaciaTexto.textContent = 'Esta factura todavía no tiene contabilización.';
   el.btnContabilizarAhora.hidden = false;
 
   await cargarPucCatalogoSiHaceFalta();
@@ -2117,6 +2164,84 @@ el.btnContabilizarAhora.addEventListener('click', async () => {
   } finally {
     el.btnContabilizarAhora.disabled = false;
   }
+});
+
+function abrirModalAplicarNC(nc) {
+  if (!nc) return;
+  state.ncOrigen = nc;
+  el.aplicarNcOrigen.textContent = `Nota: ${nc.nroFactura || ''} · ${nc.vendedorNombre || ''} (NIT ${nc.vendedorNit || ''}) · ${formatoMoneda(nc.total)}`;
+  el.aplicarNcBuscar.value = '';
+  el.aplicarNcMensaje.textContent = '';
+  el.aplicarNcMensaje.className = 'form-mensaje';
+  renderListaAplicarNC('');
+  el.modalAplicarNc.hidden = false;
+  el.aplicarNcBuscar.focus();
+}
+
+function renderListaAplicarNC(filtro) {
+  const nc = state.ncOrigen;
+  if (!nc) return;
+  const texto = (filtro || '').toLowerCase();
+  const candidatas = state.facturas
+    .filter((f) => (f.saldo || 0) > 0 && !(f.documento || '').toUpperCase().includes('NOTA'))
+    .filter((f) => String(f.vendedorNit || '') === String(nc.vendedorNit || ''))
+    .filter((f) => !texto || [f.vendedorNombre, f.nroFactura, String(f.vendedorNit || '')].join(' ').toLowerCase().includes(texto))
+    .slice(0, 60);
+  if (!candidatas.length) {
+    el.aplicarNcLista.innerHTML = '<p class="pago-base-hint">No hay facturas por pagar de este mismo proveedor (NIT ' + escapeHtml(String(nc.vendedorNit || '')) + ').</p>';
+    return;
+  }
+  el.aplicarNcLista.innerHTML = candidatas.map((f) => `
+    <div class="lote-linea aplicar-nc-linea" data-cufe="${escapeHtml(f.cufe)}">
+      <div class="lote-linea-info">
+        <b>#${escapeHtml(String(f.item))} · ${escapeHtml(f.vendedorNombre || 'Sin nombre')}</b>
+        <span class="lote-linea-saldo">Fact. ${escapeHtml(f.nroFactura || '')} · Saldo ${formatoMoneda(f.saldo)}</span>
+      </div>
+      <button type="button" class="btn btn-secundario btn-elegir-nc">Aplicar aquí</button>
+    </div>
+  `).join('');
+}
+
+el.aplicarNcBuscar.addEventListener('input', () => renderListaAplicarNC(el.aplicarNcBuscar.value));
+
+el.aplicarNcLista.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-elegir-nc');
+  if (!btn) return;
+  const cufeDestino = btn.closest('.aplicar-nc-linea').dataset.cufe;
+  const nc = state.ncOrigen;
+  if (!nc) return;
+  btn.disabled = true;
+  el.aplicarNcMensaje.textContent = 'Aplicando...';
+  el.aplicarNcMensaje.className = 'form-mensaje';
+  try {
+    const res = await fetch(URL_APLICAR_NOTA_CREDITO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cufeNotaCredito: nc.cufe, cufeFacturaDestino: cufeDestino }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.mensaje || 'No se pudo aplicar.');
+    el.modalAplicarNc.hidden = true;
+    await cargarFacturas({ mantenerSeleccion: true });
+    mostrarMensajeZip('Nota crédito aplicada correctamente.', 'ok');
+  } catch (err) {
+    console.error(err);
+    el.aplicarNcMensaje.textContent = err.message || 'Error de conexión.';
+    el.aplicarNcMensaje.className = 'form-mensaje error';
+    btn.disabled = false;
+  }
+});
+
+el.btnCerrarAplicarNc.addEventListener('click', () => { el.modalAplicarNc.hidden = true; });
+
+el.detCuadroPago.addEventListener('click', (e) => {
+  const link = e.target.closest('.link-ver-nc');
+  if (!link) return;
+  e.preventDefault();
+  const cufeNc = link.dataset.cufe;
+  const nc = state.facturas.find((f) => f.cufe === cufeNc);
+  if (!nc) { alert('No se encontró la nota crédito en el listado actual (puede que necesites recargar).'); return; }
+  mostrarDetalle(nc, { forzarTab: true, tabInicial: 'contabilidad' });
 });
 
 el.btnAplicarTodasCodigo.addEventListener('click', () => {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.22-21">
+<link rel="stylesheet" href="style.css?v=2026.09.24-6">
 </head>
 <body>
 <header class="topbar">
@@ -22,7 +22,7 @@
         <span class="ba-flecha">›</span>
       </button>
     </div>
-    <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v100</span>
+    <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v110</span>
   </div>
 </header>
 
@@ -148,6 +148,9 @@
     <h3>Pagar varias facturas en un solo pago</h3>
     <form id="form-pago-lote">
       <div id="lote-lineas" class="lote-lineas"></div>
+      <label>Fecha del pago
+        <input type="date" name="fechaPago" required>
+      </label>
       <label>Forma de Pago
         <select name="formaDePago" required>
           <option value="">-- Seleccione --</option>
@@ -205,6 +208,19 @@
       </div>
     </form>
     <button type="button" id="btn-cerrar-pago-lote" class="btn btn-secundario" style="margin-top:8px; width:100%;">Cancelar</button>
+  </div>
+</div>
+
+<div id="modal-aplicar-nc" class="overlay-lote" hidden>
+  <div class="overlay-lote-panel modal-informal-panel">
+    <h3>Aplicar nota crédito a una factura</h3>
+    <p id="aplicar-nc-origen" class="pago-base-hint"></p>
+    <input id="aplicar-nc-buscar" type="search" placeholder="Buscar proveedor, NIT o factura...">
+    <div id="aplicar-nc-lista" class="lote-lineas aplicar-nc-lista"></div>
+    <div class="form-footer">
+      <span id="aplicar-nc-mensaje" class="form-mensaje"></span>
+      <button type="button" id="btn-cerrar-aplicar-nc" class="btn btn-secundario" style="width:100%;">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -350,7 +366,7 @@
         <th class="num">Saldo</th>
         <th title="Documento archivado">📎</th>
         <th title="Contabilizada">🧮</th>
-        <th>F. Pago</th><th>Método</th><th>Estado</th><th></th>
+        <th>F. Pago</th><th>Método</th><th>Estado</th><th>Pago</th>
       </tr></thead>
       <tbody id="tabla-body"></tbody>
     </table>
@@ -482,6 +498,9 @@
         </div>
         <div class="bloque-pago bp-pagar"><span class="bp-titulo">4 · Valor a pagar</span>
         <p id="pago-base-hint" class="pago-base-hint"></p>
+        <label>Fecha del pago
+          <input type="date" name="fechaPago" required>
+        </label>
         <label>Valor Pagado
           <input type="number" name="valorPagado" step="0.01" min="0" required>
         </label>
@@ -564,7 +583,7 @@
       <div id="contab-factura-cargando" class="contab-factura-estado">Cargando...</div>
 
       <div id="contab-factura-vacia" class="contab-factura-estado" hidden>
-        <p>Esta factura todavía no tiene contabilización.</p>
+        <p id="contab-factura-vacia-texto">Esta factura todavía no tiene contabilización.</p>
         <button type="button" id="btn-contabilizar-ahora" class="btn btn-contabilidad">🧮 Contabilizar ahora</button>
         <div id="contabilizar-ahora-progreso" class="progreso-wrap" hidden>
           <div class="progreso-barra-fondo"><div id="contabilizar-ahora-barra" class="progreso-barra"></div></div>
@@ -607,6 +626,6 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.22-21"></script>
+<script src="app.js?v=2026.09.24-5"></script>
 </body>
 </html>
