@@ -1255,6 +1255,38 @@ body { font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; -webkit-
 .chk-contabilizar-masivo { padding: 6px 11px; }
 .chk-contabilizar-masivo input { flex: 0 0 auto; min-width: 0; }
 
+/* Tema "Azul océano": azul de base con turquesa, cian y naranja.
+   Verde = pagado y rojo = saldo pendiente se mantienen como estados. */
+:root { --oc-azul: #2563eb; --oc-marino: #1e3a8a; --oc-cian: #0891b2; --oc-turquesa: #0d9488; --oc-naranja: #f97316; }
+.modulo-pagos { --mod: var(--oc-azul); }
+.modulo-contab { --mod: var(--oc-cian); }
+.modulo-caja { --mod: var(--oc-turquesa); }
+.modulo-export { --mod: var(--oc-naranja); }
+.toolbar { border-bottom-color: var(--oc-naranja); }
+.toolbar-grupo:nth-child(1) { --mod: var(--oc-turquesa); }
+.toolbar-grupo:nth-child(2) { --mod: var(--oc-naranja); }
+.btn-filtros { background: linear-gradient(135deg, var(--oc-turquesa) 0%, var(--oc-cian) 50%, var(--oc-azul) 100%); }
+
+table.tabla-facturas thead th[data-orig="0"] { background: var(--oc-marino); }
+table.tabla-facturas thead th[data-orig="1"], table.tabla-facturas thead th[data-orig="2"] { background: var(--oc-azul); }
+table.tabla-facturas thead th[data-orig="3"], table.tabla-facturas thead th[data-orig="4"],
+table.tabla-facturas thead th[data-orig="5"], table.tabla-facturas thead th[data-orig="6"] { background: var(--oc-turquesa); }
+table.tabla-facturas thead th[data-orig="7"], table.tabla-facturas thead th[data-orig="8"] { background: var(--oc-naranja); }
+
+#tab-detalle > .resumen-financiero .stat-base { background: var(--oc-azul); }
+#tab-detalle > .resumen-financiero .stat-iva { background: var(--oc-cian); }
+#tab-detalle > .resumen-financiero .stat-total { background: var(--oc-marino); }
+#tab-detalle > .resumen-financiero .stat-retenciones { background: var(--oc-naranja); }
+#tab-detalle > .resumen-financiero .stat-abonado { background: #16a34a; }
+
+.tab-btn[data-tab="detalle"] { --tb: var(--oc-azul); }
+.tab-btn[data-tab="documento"] { --tb: var(--oc-naranja); }
+.tab-btn[data-tab="editar"] { --tb: var(--oc-cian); }
+.tab-btn[data-tab="contabilidad"] { --tb: var(--oc-turquesa); }
+
+.panel-filtros-cab, .exp-banner { background: linear-gradient(135deg, var(--oc-marino) 0%, var(--oc-azul) 45%, var(--oc-cian) 80%, var(--oc-turquesa) 100%); }
+.exp-btn-exportar { background: linear-gradient(135deg, var(--oc-turquesa) 0%, var(--oc-cian) 50%, var(--oc-azul) 100%); }
+
 /* Ingreso: misma franja azul */
 .login-hero-full {
   background-image: linear-gradient(var(--plano-grid) 1px, transparent 1px), linear-gradient(90deg, var(--plano-grid) 1px, transparent 1px), var(--franja);
