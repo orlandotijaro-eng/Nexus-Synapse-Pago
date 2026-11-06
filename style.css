@@ -1395,22 +1395,24 @@ details.abono-det[open] { background: color-mix(in srgb, var(--oc-cian) 6%, var(
 
 /* Modo compacto: con una factura abierta en el panel derecho, la tabla se ajusta al espacio
    que queda para ver todas sus columnas a la vez (letra menor y textos en varias líneas).
-   Si el usuario ajusta columnas con el mouse (clase col-redimensionable), mandan sus anchos;
-   doble clic en el borde de una columna vuelve al ajuste automático. */
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) { width: 100% !important; table-layout: auto !important; font-size: 0.68rem; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) thead th { width: auto !important; min-width: 0 !important; white-space: normal; padding: 6px 4px; font-size: 0.58rem; letter-spacing: 0; line-height: 1.15; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td { padding: 4px 4px; white-space: normal; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td.wrap { max-width: none; min-width: 70px; overflow-wrap: anywhere; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td.num { white-space: nowrap; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .item-nit { font-size: 0.6rem; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-credito,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-contado,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-metodo { font-size: 0.58rem; padding: 2px 5px; white-space: normal; overflow-wrap: anywhere; display: inline-block; line-height: 1.2; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-credito,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-contado { overflow-wrap: normal; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .btn-pagar { padding: 4px 6px; font-size: 0.62rem; }
+   Sin anchos personalizados, la tabla se acomoda sola; con anchos personalizados, app.js los
+   reduce en proporción mientras el panel está abierto (ver habilitarColumnasEditables). */
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) { width: 100% !important; table-layout: auto !important; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) thead th { width: auto !important; min-width: 0 !important; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td.wrap { max-width: none; min-width: 70px; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas { font-size: 0.68rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas thead th { white-space: normal; padding: 6px 4px; font-size: 0.58rem; letter-spacing: 0; line-height: 1.15; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td { padding: 4px 4px; white-space: normal; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td.wrap { overflow-wrap: anywhere; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td.num { white-space: nowrap; }
+/* Con anchos personalizados reducidos, un monto o un botón pasa a dos líneas en vez de cortarse */
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas.col-redimensionable td { text-overflow: clip; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas.col-redimensionable td.num { font-size: 0.6rem; padding-left: 2px; padding-right: 3px; letter-spacing: -0.2px; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas.col-redimensionable .btn-pagar { white-space: normal; line-height: 1.15; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .item-nit { font-size: 0.6rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge, .main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-credito, .main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-contado, .main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-metodo { font-size: 0.58rem; padding: 2px 5px; white-space: normal; display: inline-block; line-height: 1.2; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-metodo { overflow-wrap: anywhere; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .btn-pagar { padding: 4px 6px; font-size: 0.62rem; }
 
 /* Ingreso: misma franja azul */
 .login-hero-full {

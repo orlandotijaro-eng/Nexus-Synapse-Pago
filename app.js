@@ -3292,6 +3292,39 @@ function habilitarColumnasEditables(tabla, clave) {
   if (Array.isArray(guardadosAnchos) && guardadosAnchos.length === n && guardadosAnchos.every((w) => w > 0)) aplicarAnchos(guardadosAnchos);
   if (!esIdentidad()) aplicarOrden();
 
+  // ---- Con el panel derecho abierto, los anchos guardados se reducen en proporcion para que
+  // quepan todas las columnas; al cerrar el panel vuelven a su tamaño guardado ----
+  const contenedor = tabla.closest('.tabla-wrap');
+  const zonaMain = tabla.closest('.main');
+  // Minimos por columna (posicion original) para la tabla de facturas en modo compacto:
+  // check, item, fecha, proveedor, concepto, base, iva, total, saldo, doc, contab, f.pago, metodo, estado, pago
+  const minimosAjuste = clave === 'facturas' && n === 15
+    ? [28, 48, 60, 80, 64, 62, 58, 62, 62, 28, 28, 50, 60, 58, 54]
+    : [];
+  let escalaActual = 1;
+  function ajustarAlEspacio() {
+    if (!contenedor || document.body.classList.contains('redimensionando-col')) return;
+    const guardados = leer(lsAnchos);
+    if (!(Array.isArray(guardados) && guardados.length === n && guardados.every((w) => w > 0))) { escalaActual = 1; return; }
+    const panelAbierto = !!(zonaMain && zonaMain.querySelector('.panel-derecho:not([hidden])'));
+    const total = guardados.reduce((s, w) => s + w, 0);
+    const disponible = contenedor.clientWidth;
+    escalaActual = panelAbierto && disponible > 0 && total > disponible ? disponible / total : 1;
+    // Cada columna tiene un minimo legible (los montos no se cortan); las que quedarian por
+    // debajo se fijan en su minimo y el espacio que sobra se reparte entre las demas
+    const minimo = (k) => Math.min(guardados[k], minimosAjuste[k] || 36);
+    let anchos = guardados.map((w) => w * escalaActual);
+    for (let i = 0; i < 6 && escalaActual < 1; i++) {
+      const fijas = anchos.reduce((s, w, k) => s + (w <= minimo(k) ? minimo(k) : 0), 0);
+      const resto = guardados.reduce((s, w, k) => s + (anchos[k] > minimo(k) ? w : 0), 0);
+      if (!resto) break;
+      const f = Math.max(0, disponible - fijas) / resto;
+      anchos = guardados.map((w, k) => (anchos[k] <= minimo(k) ? minimo(k) : Math.max(minimo(k), w * f)));
+    }
+    aplicarAnchos(anchos.map((w, k) => Math.max(minimo(k), Math.floor(w))));
+  }
+  if (contenedor && 'ResizeObserver' in window) new ResizeObserver(ajustarAlEspacio).observe(contenedor);
+
   encabezados.forEach((th) => {
     // ---- Mango de redimension ----
     const mango = document.createElement('span');
@@ -3328,7 +3361,9 @@ function habilitarColumnasEditables(tabla, clave) {
         mango.classList.remove('activo');
         document.body.classList.remove('redimensionando-col');
         th.draggable = true;
-        escribir(lsAnchos, anchosActuales());
+        // Si la tabla estaba reducida por el panel, se guarda el ancho "real" (sin reducir)
+        escribir(lsAnchos, anchosActuales().map((w) => Math.round(w / escalaActual)));
+        ajustarAlEspacio();
       }
       document.addEventListener('mousemove', mover);
       document.addEventListener('mouseup', soltar);
