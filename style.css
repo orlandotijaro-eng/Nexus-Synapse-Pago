@@ -1393,6 +1393,15 @@ details.abono-det { border: 1px solid color-mix(in srgb, var(--oc-cian) 35%, var
 details.abono-det > summary::before { color: var(--oc-cian); }
 details.abono-det[open] { background: color-mix(in srgb, var(--oc-cian) 6%, var(--card-bg)); }
 
+/* Hoja completa: botón Exportar a Excel (verde de Excel con el turquesa del tema) */
+.btn-exportar-excel {
+  margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border: 0; border-radius: 999px; cursor: pointer; color: #fff; font-weight: 800; font-size: 0.82rem;
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 45%, var(--oc-turquesa) 100%);
+  box-shadow: 0 3px 10px rgba(22,163,74,0.35);
+}
+.btn-exportar-excel:hover { filter: brightness(1.08); }
+
 /* Modo compacto: con una factura abierta en el panel derecho, la tabla se ajusta al espacio
    que queda para ver todas sus columnas a la vez (letra menor y textos en varias líneas).
    Sin anchos personalizados, la tabla se acomoda sola; con anchos personalizados, app.js los

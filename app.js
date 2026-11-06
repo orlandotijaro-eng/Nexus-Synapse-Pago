@@ -2376,6 +2376,68 @@ document.querySelectorAll('.contab-todo-tabla thead th').forEach((th, i) => {
   });
 });
 
+// Exportar la hoja completa a Excel: las mismas lineas que se ven (mes, busqueda, estado PUC y
+// orden), con las columnas en el orden en que el usuario las tenga acomodadas en pantalla.
+// Va con CUFE completo y links de PDF/XML; fechas y valores como numeros de Excel.
+const COLUMNAS_EXCEL_TODO = [
+  { t: 'Fecha', v: (f) => f.fecha, fecha: true },
+  { t: 'Documento', v: (f) => `${f.prefijo || ''}${f.numero || ''}` },
+  { t: 'NIT', v: (f) => String(f.terceroExterno || '') },
+  { t: 'Descripción', v: (f) => f.nota || '' },
+  { t: 'Código', v: (f) => (pucPendiente(f.codigoInventario) ? 'PUC pendiente' : String(f.codigoInventario || '')) },
+  { t: 'Cant.', v: (f) => numeroOVacio(f.cantidad) },
+  { t: 'Valor unit.', v: (f) => numeroOVacio(f.valorUnit) },
+  { t: 'IVA %', v: (f) => (f.ivaPct === '' || f.ivaPct == null ? '' : Number(f.ivaPct)), pct: true },
+  { t: 'F. Pago', v: (f) => f.formaDePago || '' },
+  { t: 'Estado', v: (f) => f.estadoCarga || '' },
+  { t: 'Nota detalle', v: (f) => f.notaDetalle || '' },
+  { t: 'Empresa', v: (f) => f.empresa || '' },
+  { t: 'Bodega', v: (f) => f.bodega || '' },
+  { t: 'F. Vencim.', v: (f) => f.fechaVencimiento, fecha: true },
+  { t: 'Anulado', v: (f) => (f.anulado ? 'Sí' : 'No') },
+  { t: 'Ciudad', v: (f) => f.ciudadRemitente || '' },
+  { t: 'Correo origen', v: (f) => f.emailOrigen || '' },
+  { t: 'F. Proceso', v: (f) => f.fechaHoraProceso || '' },
+  { t: 'CUFE', v: (f) => f.clave || '' },
+  { t: 'PDF', v: (f) => f.linkPdf || '' },
+  { t: 'XML', v: (f) => f.linkXml || '' },
+];
+function numeroOVacio(x) {
+  if (x === '' || x === null || x === undefined) return '';
+  const n = Number(x);
+  return Number.isNaN(n) ? String(x) : n;
+}
+
+function exportarContabTodoExcel() {
+  if (typeof XLSX === 'undefined') { alert('No se cargó la librería de Excel. Revisa tu conexión y recarga con Ctrl+F5.'); return; }
+  const items = state.contabTodoVisibles || [];
+  if (!items.length) { alert('No hay líneas para exportar con los filtros actuales.'); return; }
+  const orden = [...document.querySelectorAll('.contab-todo-tabla thead th')].map((th) => Number(th.dataset.orig));
+  const cols = orden.map((o) => COLUMNAS_EXCEL_TODO[o]).filter(Boolean);
+  const aoa = [cols.map((c) => c.t)].concat(items.map((f) => cols.map((c) => {
+    if (!c.fecha) return c.v(f);
+    const ms = fechaComoNumero(c.v(f));
+    return ms === null ? (c.v(f) || '') : ms / 86400000 + 25569;
+  })));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  cols.forEach((c, k) => {
+    for (let r = 1; r < aoa.length; r++) {
+      const celda = ws[XLSX.utils.encode_cell({ r, c: k })];
+      if (!celda || celda.t !== 'n') continue;
+      if (c.fecha) celda.z = 'dd/mm/yyyy';
+      else if (c.pct) celda.z = '0%';
+      else if (c.t === 'Valor unit.') celda.z = '#,##0.00';
+    }
+  });
+  ws['!cols'] = cols.map((c) => ({ wch: c.t === 'CUFE' ? 40 : (c.t === 'Descripción' || c.t === 'PDF' || c.t === 'XML') ? 32 : 14 }));
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: aoa.length - 1, c: cols.length - 1 } }) };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Contabilizacion');
+  const mes = el.contabTodoMes.value || state.contabTodoMes || 'todo';
+  XLSX.writeFile(wb, `Contabilizacion_${mes}.xlsx`);
+}
+document.getElementById('btn-contab-todo-excel')?.addEventListener('click', exportarContabTodoExcel);
+
 function renderContabTodo() {
   const mes = el.contabTodoMes.value || state.contabTodoMes;
   const texto = (el.contabTodoBuscar.value || '').toLowerCase().trim();
@@ -2391,6 +2453,7 @@ function renderContabTodo() {
   else if (state.contabTodoPucEstado === 'asignado') items = items.filter((f) => !pucPendiente(f.codigoInventario));
   items = ordenarItemsTodo(items);
   marcarFlechasOrdenTodo();
+  state.contabTodoVisibles = items;
 
   el.contabTodoResumen.textContent = mes
     ? `${etiquetaMes(mes)} · ${items.length} línea${items.length === 1 ? '' : 's'}`
