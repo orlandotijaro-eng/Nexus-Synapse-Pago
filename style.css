@@ -1287,6 +1287,76 @@ table.tabla-facturas thead th[data-orig="7"], table.tabla-facturas thead th[data
 .panel-filtros-cab, .exp-banner { background: linear-gradient(135deg, var(--oc-marino) 0%, var(--oc-azul) 45%, var(--oc-cian) 80%, var(--oc-turquesa) 100%); }
 .exp-btn-exportar { background: linear-gradient(135deg, var(--oc-turquesa) 0%, var(--oc-cian) 50%, var(--oc-azul) 100%); }
 
+/* Cada pestaña toma el color de su módulo: Contabilidad cian, Caja Menor turquesa, Exportar naranja */
+:root { --contab: #0e7490; --contab-bg: #e0f4f8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --contab: #67d4ea; --contab-bg: rgba(34, 211, 238, 0.14); } }
+:root[data-theme="dark"] { --contab: #67d4ea; --contab-bg: rgba(34, 211, 238, 0.14); }
+#seccion-contabilidad { --sec: var(--oc-cian); --sec2: var(--oc-azul); }
+#seccion-caja { --sec: var(--oc-turquesa); --sec2: var(--oc-cian); --contab: #0f766e; --contab-bg: #ddf4f1; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #seccion-caja { --contab: #5eead4; --contab-bg: rgba(45, 212, 191, 0.14); } }
+:root[data-theme="dark"] #seccion-caja { --contab: #5eead4; --contab-bg: rgba(45, 212, 191, 0.14); }
+
+#seccion-contabilidad > .contab-head, #seccion-caja > .contab-head {
+  padding: 16px 22px; margin-bottom: 12px; border-radius: 14px; color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sec) 100%, #000 25%) 0%, var(--sec) 55%, var(--sec2) 100%);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--sec) 35%, transparent);
+}
+#seccion-contabilidad > .contab-head h2, #seccion-caja > .contab-head h2 { color: #fff; font-size: 1.25rem; }
+#seccion-caja > .contab-head .btn-secundario { background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.55); font-weight: 700; }
+#seccion-caja > .contab-head .btn-secundario:hover { background: rgba(255,255,255,0.3); }
+.contab-subtab.activa { color: var(--contab); border-bottom-color: var(--contab); }
+
+/* Hoja completa de Contabilización: grupos de columnas en la paleta océano */
+.contab-todo-tabla thead th[data-orig="0"], .contab-todo-tabla thead th[data-orig="1"], .contab-todo-tabla thead th[data-orig="2"], .contab-todo-tabla thead th[data-orig="3"] { background: var(--oc-azul); }
+.contab-todo-tabla thead th[data-orig="4"], .contab-todo-tabla thead th[data-orig="5"], .contab-todo-tabla thead th[data-orig="6"], .contab-todo-tabla thead th[data-orig="7"] { background: var(--oc-turquesa); }
+.contab-todo-tabla thead th[data-orig="8"], .contab-todo-tabla thead th[data-orig="9"] { background: var(--oc-naranja); }
+.contab-todo-tabla thead th[data-orig="10"], .contab-todo-tabla thead th[data-orig="11"], .contab-todo-tabla thead th[data-orig="12"], .contab-todo-tabla thead th[data-orig="13"], .contab-todo-tabla thead th[data-orig="14"] { background: var(--oc-cian); }
+.contab-todo-tabla thead th[data-orig="15"], .contab-todo-tabla thead th[data-orig="16"], .contab-todo-tabla thead th[data-orig="17"] { background: var(--oc-marino); }
+.contab-todo-tabla thead th[data-orig="18"], .contab-todo-tabla thead th[data-orig="19"], .contab-todo-tabla thead th[data-orig="20"] { background: #0369a1; }
+
+/* Caja Menor: tarjetas turquesa en vez de café */
+.caja-tarjeta { border-color: color-mix(in srgb, var(--oc-turquesa) 55%, transparent); background: linear-gradient(155deg, color-mix(in srgb, var(--oc-turquesa) 14%, var(--card-bg)), var(--card-bg)); box-shadow: 0 4px 12px rgba(13,148,136,0.15); }
+.caja-tarjeta-cab b { color: var(--contab); }
+
+/* Exportar WO: el naranja de su módulo junto al azul */
+.exp-banner { background: linear-gradient(135deg, #c2410c 0%, var(--oc-naranja) 40%, var(--oc-azul) 100%); }
+.exp-num { background: linear-gradient(135deg, var(--oc-naranja), var(--oc-azul)); }
+.exp-kpis .contab-kpi { border-top-color: var(--oc-cian); }
+.exp-kpis .kpi-ter { border-top-color: var(--oc-turquesa); }
+.exp-kpis .kpi-total { border-top-color: var(--oc-azul); }
+
+/* Ficha de la factura: encabezado océano y las 5 pestañas con la misma paleta */
+.det-head {
+  color: #fff; border-bottom: 0; padding: 12px 16px 10px;
+  background: linear-gradient(135deg, var(--oc-marino) 0%, var(--oc-azul) 55%, var(--oc-cian) 100%);
+}
+.det-head h2 { color: #fff; }
+.det-head .det-meta { color: rgba(255,255,255,0.82); }
+.det-head .badge, .det-head .badge-credito { box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+.tabs { background: color-mix(in srgb, var(--oc-azul) 7%, var(--card-bg)); border-bottom: 2px solid color-mix(in srgb, var(--oc-azul) 25%, var(--border)); }
+.tab-btn { background: var(--card-bg); }
+
+#form-pago .bloque-pago.bp-forma { --bp: var(--oc-turquesa); }
+#form-pago .bloque-pago.bp-ica { --bp: var(--oc-azul); }
+#form-pago .bloque-pago.bp-ret { --bp: var(--oc-naranja); }
+#form-pago .bloque-pago.bp-pagar { --bp: #16a34a; }
+#form-pago .bloque-pago .bp-titulo { background: linear-gradient(135deg, color-mix(in srgb, var(--bp) 100%, #000 18%), var(--bp)); }
+#form-pago .form-footer .btn-primary { background: linear-gradient(135deg, #15803d, #22c55e); box-shadow: 0 4px 12px rgba(22,163,74,0.4); font-weight: 800; }
+
+#form-editar .be-doc { --be: var(--oc-azul); }
+#form-editar .be-prov { --be: var(--oc-turquesa); }
+#form-editar .be-val { --be: var(--oc-naranja); }
+#form-editar .be-conc { --be: var(--oc-cian); }
+#form-editar .bloque-edit .be-titulo { background: linear-gradient(135deg, color-mix(in srgb, var(--be) 100%, #000 18%), var(--be)); }
+#form-editar .form-footer .btn-primary { background: linear-gradient(135deg, var(--oc-marino), var(--oc-azul) 60%, var(--oc-cian)); }
+
+.tab-documento .doc-links { background: color-mix(in srgb, var(--oc-naranja) 10%, var(--card-bg)); border-bottom: 2px solid color-mix(in srgb, var(--oc-naranja) 40%, transparent); }
+.tab-documento .doc-links .btn-secundario { background: var(--oc-naranja); color: #fff; border: 0; font-weight: 700; box-shadow: 0 2px 6px rgba(249,115,22,0.35); }
+.tab-documento .doc-links .btn-secundario:hover { filter: brightness(1.08); }
+
+#tab-contabilidad .btn-contabilidad { background: linear-gradient(135deg, var(--oc-turquesa), var(--oc-cian)); box-shadow: 0 3px 10px rgba(8,145,178,0.35); }
+#tab-contabilidad .contab-factura-estado { border-radius: 12px; background: color-mix(in srgb, var(--oc-cian) 8%, var(--card-bg)); border: 1px dashed color-mix(in srgb, var(--oc-cian) 45%, transparent); margin: 12px; }
+
 /* Ingreso: misma franja azul */
 .login-hero-full {
   background-image: linear-gradient(var(--plano-grid) 1px, transparent 1px), linear-gradient(90deg, var(--plano-grid) 1px, transparent 1px), var(--franja);
