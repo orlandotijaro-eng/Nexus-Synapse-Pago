@@ -1357,24 +1357,60 @@ table.tabla-facturas thead th[data-orig="7"], table.tabla-facturas thead th[data
 #tab-contabilidad .btn-contabilidad { background: linear-gradient(135deg, var(--oc-turquesa), var(--oc-cian)); box-shadow: 0 3px 10px rgba(8,145,178,0.35); }
 #tab-contabilidad .contab-factura-estado { border-radius: 12px; background: color-mix(in srgb, var(--oc-cian) 8%, var(--card-bg)); border: 1px dashed color-mix(in srgb, var(--oc-cian) 45%, transparent); margin: 12px; }
 
+/* Pago aplicado / Nota crédito aplicada: tarjeta océano con cuadros de color sólido */
+.pago-aplicado {
+  border: 0; border-radius: 14px; padding: 14px;
+  background: linear-gradient(135deg, var(--oc-marino) 0%, var(--oc-azul) 55%, var(--oc-cian) 100%);
+  box-shadow: 0 6px 18px rgba(30,58,138,0.35);
+}
+.pago-aplicado h3 { color: #fff; font-size: 0.9rem; letter-spacing: 0.3px; }
+.pago-aplicado .resumen-financiero .stat { color: #fff; border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+.pago-aplicado .resumen-financiero dt { color: rgba(255,255,255,0.88); }
+.pago-aplicado dd { color: #fff; }
+.pago-aplicado .resumen-financiero .stat-base { background: var(--oc-turquesa); }
+.pago-aplicado .resumen-financiero .stat-iva { background: var(--oc-cian); }
+.pago-aplicado .resumen-financiero .stat-retenciones { background: var(--oc-naranja); }
+.pago-aplicado .resumen-financiero .stat-total { background: #16a34a; }
+
+.pago-aplicado .cuadro-pago { border: 0; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+.cuadro-pago thead th { background: var(--oc-marino); }
+.cuadro-pago tr.cp-bruto th, .cuadro-pago tr.cp-bruto td { background: color-mix(in srgb, var(--oc-turquesa) 18%, var(--card-bg)); }
+.cuadro-pago tr.cp-rtf th, .cuadro-pago tr.cp-rtf td { background: color-mix(in srgb, var(--oc-naranja) 16%, var(--card-bg)); }
+.cuadro-pago tr.cp-ica th, .cuadro-pago tr.cp-ica td { background: color-mix(in srgb, var(--oc-cian) 16%, var(--card-bg)); }
+.cuadro-pago tr.cp-rtiva th, .cuadro-pago tr.cp-rtiva td { background: color-mix(in srgb, var(--oc-azul) 12%, var(--card-bg)); }
+.cuadro-pago tr.cp-neto th, .cuadro-pago tr.cp-neto td { background: color-mix(in srgb, #16a34a 18%, var(--card-bg)); border-top: 2px solid var(--oc-azul); }
+.cuadro-pago tr.cp-pagos-tit th { background: linear-gradient(135deg, var(--oc-turquesa), var(--oc-cian)); }
+.cuadro-pago tr.cp-pago td.tar b { color: var(--oc-azul); }
+
+.pago-aplicado .pago-acciones .btn { border: 0; color: #fff; }
+.pago-aplicado #link-comprobante, .pago-aplicado #btn-ver-factura-nc { background: linear-gradient(135deg, var(--oc-azul), var(--oc-cian)); }
+.pago-aplicado #btn-modificar-pago { background: linear-gradient(135deg, #ea580c, var(--oc-naranja)); color: #fff; }
+.pago-aplicado #btn-anular-pago { background: linear-gradient(135deg, #b91c1c, #ef4444); }
+
+/* Historial de abonos */
+.abonos-wrap h3 { color: var(--oc-marino); font-size: 0.8rem; letter-spacing: 0.4px; padding-left: 8px; border-left: 4px solid var(--oc-turquesa); }
+details.abono-det { border: 1px solid color-mix(in srgb, var(--oc-cian) 35%, var(--border)); border-left: 4px solid var(--oc-cian); }
+details.abono-det > summary::before { color: var(--oc-cian); }
+details.abono-det[open] { background: color-mix(in srgb, var(--oc-cian) 6%, var(--card-bg)); }
+
 /* Modo compacto: con una factura abierta en el panel derecho, la tabla se ajusta al espacio
    que queda para ver todas sus columnas a la vez (letra menor y textos en varias líneas).
-   Los anchos de columna guardados vuelven al cerrar el panel. */
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas { width: 100% !important; table-layout: auto !important; font-size: 0.68rem; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas thead th { width: auto !important; min-width: 0 !important; white-space: normal; padding: 6px 4px; font-size: 0.58rem; letter-spacing: 0; line-height: 1.15; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td { padding: 4px 4px; white-space: normal; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td.wrap { max-width: none; min-width: 70px; overflow-wrap: anywhere; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td.num { white-space: nowrap; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .item-nit { font-size: 0.6rem; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-credito,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-contado,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-metodo { font-size: 0.58rem; padding: 2px 5px; white-space: normal; overflow-wrap: anywhere; display: inline-block; line-height: 1.2; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-credito,
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-contado { overflow-wrap: normal; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .btn-pagar { padding: 4px 6px; font-size: 0.62rem; }
-.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .col-resizer { display: none; }
+   Si el usuario ajusta columnas con el mouse (clase col-redimensionable), mandan sus anchos;
+   doble clic en el borde de una columna vuelve al ajuste automático. */
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) { width: 100% !important; table-layout: auto !important; font-size: 0.68rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) thead th { width: auto !important; min-width: 0 !important; white-space: normal; padding: 6px 4px; font-size: 0.58rem; letter-spacing: 0; line-height: 1.15; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td { padding: 4px 4px; white-space: normal; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td.wrap { max-width: none; min-width: 70px; overflow-wrap: anywhere; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) td.num { white-space: nowrap; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .item-nit { font-size: 0.6rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-credito,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-contado,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-metodo { font-size: 0.58rem; padding: 2px 5px; white-space: normal; overflow-wrap: anywhere; display: inline-block; line-height: 1.2; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-credito,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .badge-contado { overflow-wrap: normal; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas:not(.col-redimensionable) .btn-pagar { padding: 4px 6px; font-size: 0.62rem; }
 
 /* Ingreso: misma franja azul */
 .login-hero-full {
