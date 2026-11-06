@@ -1357,6 +1357,25 @@ table.tabla-facturas thead th[data-orig="7"], table.tabla-facturas thead th[data
 #tab-contabilidad .btn-contabilidad { background: linear-gradient(135deg, var(--oc-turquesa), var(--oc-cian)); box-shadow: 0 3px 10px rgba(8,145,178,0.35); }
 #tab-contabilidad .contab-factura-estado { border-radius: 12px; background: color-mix(in srgb, var(--oc-cian) 8%, var(--card-bg)); border: 1px dashed color-mix(in srgb, var(--oc-cian) 45%, transparent); margin: 12px; }
 
+/* Modo compacto: con una factura abierta en el panel derecho, la tabla se ajusta al espacio
+   que queda para ver todas sus columnas a la vez (letra menor y textos en varias líneas).
+   Los anchos de columna guardados vuelven al cerrar el panel. */
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas { width: 100% !important; table-layout: auto !important; font-size: 0.68rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas thead th { width: auto !important; min-width: 0 !important; white-space: normal; padding: 6px 4px; font-size: 0.58rem; letter-spacing: 0; line-height: 1.15; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td { padding: 4px 4px; white-space: normal; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td.wrap { max-width: none; min-width: 70px; overflow-wrap: anywhere; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas td.num { white-space: nowrap; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .item-nit { font-size: 0.6rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-credito,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-contado,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-metodo { font-size: 0.58rem; padding: 2px 5px; white-space: normal; overflow-wrap: anywhere; display: inline-block; line-height: 1.2; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-credito,
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .badge-contado { overflow-wrap: normal; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .btn-pagar { padding: 4px 6px; font-size: 0.62rem; }
+.main:has(.panel-derecho:not([hidden])) table.tabla-facturas .col-resizer { display: none; }
+
 /* Ingreso: misma franja azul */
 .login-hero-full {
   background-image: linear-gradient(var(--plano-grid) 1px, transparent 1px), linear-gradient(90deg, var(--plano-grid) 1px, transparent 1px), var(--franja);
