@@ -4,16 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SynapsePagos · HYE SAS</title>
-<link rel="stylesheet" href="style.css?v=2026.09.24-6">
+<link rel="stylesheet" href="style.css?v=2026.10.20-5">
 </head>
 <body>
+<div id="pantalla-login" hidden>
+  <div class="login-hero-full">
+    <span class="brand-mark">HYE</span>
+    <h1>SynapsePagos</h1>
+    <p>Ingeniería y Equipos HYE SAS</p>
+    <p class="login-tagline">🤖 Registro, pagos y contabilización de facturas</p>
+  </div>
+  <div class="login-card-wrap">
+    <div class="login-card">
+      <h2>Ingresar</h2>
+      <form id="form-login">
+        <label>Usuario
+          <input type="text" id="in-pagos-usuario" autocomplete="username" autocapitalize="none" required>
+        </label>
+        <label>Contraseña
+          <input type="password" id="in-pagos-contrasena" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+        </label>
+        <span id="login-mensaje" class="form-mensaje"></span>
+        <button type="submit" class="btn btn-primary">Ingresar</button>
+      </form>
+      <p class="login-version" id="login-version">v165</p>
+    </div>
+  </div>
+</div>
+
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
       <span class="brand-mark">HYE</span>
       <div class="brand-text">
         <h1>SynapsePagos</h1>
-        <p>Ingeniería y Equipos HYE SAS · Registro de facturas</p>
+        <p class="brand-empresa">Ingeniería y Equipos HYE SAS</p>
+        <p class="brand-sub">Registro de facturas</p>
         <p class="brand-tagline">🤖 Lee, clasifica y archiva tus facturas con Inteligencia Artificial</p>
       </div>
       <button type="button" id="btn-acerca-hye" class="banner-acerca">
@@ -22,77 +48,51 @@
         <span class="ba-flecha">›</span>
       </button>
     </div>
-    <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v110</span>
+    <div class="topbar-derecha">
+      <div id="sesion-info" class="sesion-info" hidden>
+        <span id="sesion-avatar" class="sesion-avatar" aria-hidden="true">?</span>
+        <span class="sesion-datos"><small>Usuario</small><span id="sesion-nombre"></span></span>
+        <button type="button" id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión">⎋ Salir</button>
+      </div>
+      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v165</span>
+    </div>
   </div>
 </header>
 
-<div class="app-tabs">
-  <button type="button" class="app-tab activa" data-appseccion="pagos">💰 Pagos</button>
-  <button type="button" class="app-tab" data-appseccion="contabilidad">🧮 Contabilidad</button>
-</div>
+<nav class="app-tabs modulos" aria-label="Módulos">
+  <button type="button" class="app-tab modulo modulo-pagos activa" data-appseccion="pagos">
+    <span class="modulo-ico">💰</span><span class="modulo-txt"><b>Pagos</b><small>Facturas y abonos</small></span>
+  </button>
+  <button type="button" class="app-tab modulo modulo-contab" data-appseccion="contabilidad">
+    <span class="modulo-ico">🧮</span><span class="modulo-txt"><b>Contabilidad</b><small>PUC y hoja completa</small></span>
+  </button>
+  <button type="button" class="app-tab modulo modulo-caja" data-appseccion="caja">
+    <span class="modulo-ico">👛</span><span class="modulo-txt"><b>Caja Menor</b><small>Cajas y gastos</small></span>
+  </button>
+  <button type="button" class="app-tab modulo modulo-export" data-appseccion="exportar">
+    <span class="modulo-ico">📤</span><span class="modulo-txt"><b>Exportar WO</b><small>Archivos para World Office</small></span>
+  </button>
+</nav>
 
 <div class="toolbar">
   <div class="toolbar-grupo">
-    <span class="toolbar-titulo">Filtros</span>
-    <div class="toolbar-controles toolbar-controles-cuadros">
-      <div class="cuadro-filtro cuadro-filtro-busqueda">
-        <span class="cuadro-filtro-tit">Búsqueda</span>
-        <input id="buscar" type="search" placeholder="Buscar proveedor, NIT o factura...">
-      </div>
-      <div class="cuadro-filtro">
-        <span class="cuadro-filtro-tit">Periodo</span>
-        <label class="campo-mini">Mes<select id="filtro-mes"><option value="todos">Todos</option></select></label>
-      </div>
-      <div class="cuadro-filtro">
-        <span class="cuadro-filtro-tit">Estado</span>
-        <label class="campo-mini">
-          <select id="filtro-estado">
-            <option value="todas">Todas</option>
-            <option value="pendientes">Pendientes de pago</option>
-            <option value="pagadas">Pagadas</option>
-          </select>
-        </label>
-        <label class="chk-credito"><input type="checkbox" id="filtro-credito"> Solo a crédito</label>
-      </div>
-      <div class="cuadro-filtro">
-        <span class="cuadro-filtro-tit">Tipo de documento</span>
-        <label class="campo-mini">
-          <select id="filtro-tipo-documento">
-            <option value="todos">Formales + Informales</option>
-            <option value="formales">Solo formales</option>
-            <option value="informales">Solo informales</option>
-          </select>
-        </label>
-      </div>
-      <div class="cuadro-filtro">
-        <span class="cuadro-filtro-tit">Método de pago</span>
-        <label class="campo-mini"><select id="filtro-metodo"><option value="todos">Todos</option></select></label>
-      </div>
-    </div>
-  </div>
-
-  <div class="toolbar-grupo">
-    <span class="toolbar-titulo">Informes</span>
-    <div class="toolbar-controles">
-      <span id="resumen-bar" class="resumen-bar"></span>
-    </div>
-  </div>
-
-  <div class="toolbar-grupo">
     <span class="toolbar-titulo">Cargue documentos electrónicos</span>
-    <div class="toolbar-controles">
-      <label class="btn btn-secundario btn-cargar-zip">
-        📎 Documento (ZIP)
-        <input type="file" id="input-zip-doc" accept=".zip" multiple hidden>
-      </label>
-      <label class="btn btn-secundario btn-cargar-zip" title="Para ZIPs cuyo nombre de archivo es el CUFE de una factura ya existente en la hoja">
-        🗂️ Masivo (ZIP = CUFE)
-        <input type="file" id="input-zip-masivo" accept=".zip" multiple hidden>
-      </label>
-      <label class="chk-contabilizar-masivo" title="Desmárcalo si este lote es solo para actualizar datos/archivos en la hoja, sin que dispare la contabilización">
+    <div class="carga-campo">
+      <div class="carga-fichas">
+        <label class="carga-ficha" title="Un ZIP por factura (con su XML y PDF)">
+          <span class="carga-ficha-icono">📎</span>
+          <span class="carga-ficha-txt"><b>Documento (ZIP)</b><small>Un ZIP por factura nueva</small></span>
+          <input type="file" id="input-zip-doc" accept=".zip" multiple hidden>
+        </label>
+        <label class="carga-ficha" title="Para ZIPs cuyo nombre de archivo es el CUFE de una factura ya existente en la hoja">
+          <span class="carga-ficha-icono">🗂️</span>
+          <span class="carga-ficha-txt"><b>Masivo (ZIP = CUFE)</b><small>ZIP nombrado con el CUFE · pausa cada 5</small></span>
+          <input type="file" id="input-zip-masivo" accept=".zip" multiple hidden>
+        </label>
+      </div>
+      <label class="chk-contabilizar-masivo carga-contabilizar" title="Desmárcalo si este lote es solo para actualizar datos/archivos en la hoja, sin que dispare la contabilización">
         <input type="checkbox" id="chk-contabilizar-masivo" checked> Contabilizar también
       </label>
-      <button id="btn-refrescar" class="btn btn-secundario" title="Actualizar listado">⟳ Actualizar</button>
     </div>
   </div>
 
@@ -107,8 +107,66 @@
     </div>
   </div>
 
+  <div class="toolbar-derecha">
+    <div id="resumen-bar" class="resumen-bar resumen-plano"></div>
+    <div class="toolbar-derecha-botones">
+      <button id="btn-refrescar" class="btn btn-secundario btn-actualizar-plano" title="Actualizar listado">⟳ Actualizar</button>
+      <button type="button" id="btn-filtros" class="btn-filtros" aria-expanded="false" aria-controls="panel-filtros">🔍 Filtros <span id="filtros-badge" class="filtros-badge" hidden>0</span></button>
+    </div>
+  </div>
+
   <div id="zip-mensaje" class="zip-mensaje" hidden></div>
 </div>
+
+<aside id="panel-filtros" class="panel-filtros" aria-hidden="true">
+  <header class="panel-filtros-cab">
+    <h3>🔍 Filtros</h3>
+    <button type="button" id="btn-cerrar-filtros" class="panel-filtros-cerrar" title="Cerrar (Esc)">✕</button>
+  </header>
+  <div class="panel-filtros-cuerpo">
+  <div class="cuadro-filtro cuadro-filtro-busqueda">
+    <span class="cuadro-filtro-tit">Búsqueda</span>
+    <input id="buscar" type="search" placeholder="Buscar proveedor, NIT o factura...">
+  </div>
+  <div class="cuadro-filtro cuadro-filtro-busqueda cuadro-filtro-cufe">
+    <span class="cuadro-filtro-tit">CUFE</span>
+    <input id="filtro-cufe" type="search" class="input-cufe" placeholder="Pegar o escribir CUFE (completo o parte)..." autocomplete="off" spellcheck="false">
+  </div>
+  <div class="cuadro-filtro">
+    <span class="cuadro-filtro-tit">Periodo</span>
+    <label class="campo-mini">Mes<select id="filtro-mes"><option value="todos">Todos</option></select></label>
+  </div>
+  <div class="cuadro-filtro">
+    <span class="cuadro-filtro-tit">Estado</span>
+    <label class="campo-mini">
+      <select id="filtro-estado">
+        <option value="todas">Todas</option>
+        <option value="pendientes">Pendientes de pago</option>
+        <option value="pagadas">Pagadas</option>
+      </select>
+    </label>
+    <label class="chk-credito"><input type="checkbox" id="filtro-credito"> Solo a crédito</label>
+  </div>
+  <div class="cuadro-filtro">
+    <span class="cuadro-filtro-tit">Tipo de documento</span>
+    <label class="campo-mini">
+      <select id="filtro-tipo-documento">
+        <option value="todos">Formales + Informales</option>
+        <option value="formales">Solo formales</option>
+        <option value="informales">Solo informales</option>
+      </select>
+    </label>
+  </div>
+  <div class="cuadro-filtro">
+    <span class="cuadro-filtro-tit">Método de pago</span>
+    <label class="campo-mini"><select id="filtro-metodo"><option value="todos">Todos</option></select></label>
+  </div>
+  </div>
+  <footer class="panel-filtros-pie">
+    <button type="button" id="btn-limpiar-filtros" class="btn btn-secundario">Limpiar filtros</button>
+    <span id="filtros-resultado" class="filtros-resultado"></span>
+  </footer>
+</aside>
 
 <div id="modal-informal" class="overlay-lote" hidden>
   <div class="overlay-lote-panel modal-informal-panel">
@@ -143,71 +201,27 @@
   </div>
 </div>
 
-<div id="modal-pago-lote" class="overlay-lote" hidden>
+
+<div id="modal-ver-grupo" class="overlay-lote" hidden>
   <div class="overlay-lote-panel modal-informal-panel">
-    <h3>Pagar varias facturas en un solo pago</h3>
-    <form id="form-pago-lote">
-      <div id="lote-lineas" class="lote-lineas"></div>
-      <label>Fecha del pago
-        <input type="date" name="fechaPago" required>
+    <h3>👥 Pago conjunto</h3>
+    <p class="pago-base-hint">Estas facturas se pagaron juntas, en el mismo movimiento. Puedes corregir el valor de cualquiera aquí mismo:</p>
+    <div id="ver-grupo-total" class="lote-resumen">
+      <span>Total del pago <b id="ver-grupo-total-valor"></b></span>
+    </div>
+    <div id="ver-grupo-lista" class="lote-lineas"></div>
+    <div class="lote-agregar">
+      <label>➕ Agregar otra factura a este pago
+        <input type="text" id="ver-grupo-agregar-buscar" placeholder="Buscar factura o proveedor por nombre/número...">
       </label>
-      <label>Forma de Pago
-        <select name="formaDePago" required>
-          <option value="">-- Seleccione --</option>
-          <option value="Crédito">Crédito</option>
-          <option value="Efectivo">Efectivo</option>
-          <option value="Banco Av Villas">Banco Av Villas</option>
-          <option value="Banco Davivienda">Banco Davivienda</option>
-          <option value="TD Av Villas">TD Av Villas</option>
-          <option value="NEQUI_LE">Nequi (L.E)</option>
-        </select>
-      </label>
-      <label>Tarifa ICA
-        <select name="tarifaIca" required>
-          <option value="">-- Seleccione --</option>
-          <option value="4.14 x 1.000">4.14 x 1.000</option>
-          <option value="6.9 x 1.000">6.9 x 1.000</option>
-          <option value="7.66 x 1.000">7.66 x 1.000</option>
-          <option value="8.66 x 1.000">8.66 x 1.000</option>
-          <option value="9.66 x 1.000">9.66 x 1.000</option>
-          <option value="11.04 x 1.000">11.04 x 1.000</option>
-          <option value="13.8 x 1.000">13.8 x 1.000</option>
-          <option value="No APLICA">No APLICA</option>
-        </select>
-      </label>
-      <fieldset>
-        <legend>Retención Fuente</legend>
-        <div class="radio-group">
-          <label><input type="radio" name="retencionFuente" value="Compras" required> Compras</label>
-          <label><input type="radio" name="retencionFuente" value="Servicios"> Servicios</label>
-          <label><input type="radio" name="retencionFuente" value="Honorarios"> Honorarios</label>
-          <label><input type="radio" name="retencionFuente" value="Arrendamientos"> Arrendamientos</label>
-          <label><input type="radio" name="retencionFuente" value="No aplica"> No aplica</label>
-        </div>
-      </fieldset>
-      <label>Tarifa de Retención
-        <select name="tarifaRetencion" required>
-          <option value="">-- Seleccione --</option>
-          <option value="1 %">1 %</option>
-          <option value="2%">2%</option>
-          <option value="2.5%">2.5%</option>
-          <option value="3.5%">3.5%</option>
-          <option value="4%">4%</option>
-          <option value="6%">6%</option>
-          <option value="10%">10%</option>
-          <option value="11%">11%</option>
-          <option value="No aplica">No aplica</option>
-        </select>
-      </label>
-      <label>Comprobante (opcional, uno solo para todo el pago)
-        <input type="file" name="comprobante" accept="image/*,application/pdf">
-      </label>
-      <div class="form-footer">
-        <span id="lote-pago-mensaje" class="form-mensaje"></span>
-        <button type="submit" class="btn btn-primary">Guardar pago del lote</button>
-      </div>
-    </form>
-    <button type="button" id="btn-cerrar-pago-lote" class="btn btn-secundario" style="margin-top:8px; width:100%;">Cancelar</button>
+      <div id="ver-grupo-agregar-resultados" class="lote-agregar-resultados" hidden></div>
+    </div>
+    <span id="ver-grupo-mensaje" class="form-mensaje"></span>
+    <div class="ver-grupo-acciones">
+      <button type="button" id="btn-guardar-grupo" class="btn btn-primary" hidden>💾 Guardar cambios</button>
+      <button type="button" id="btn-anular-grupo" class="btn btn-peligro">Anular todo el pago</button>
+    </div>
+    <button type="button" id="btn-cerrar-ver-grupo" class="btn btn-secundario" style="width:100%; margin-top:8px;">Cerrar</button>
   </div>
 </div>
 
@@ -240,19 +254,35 @@
       Mostrando: <b id="contab-filtro-activo-texto"></b>
       <button type="button" id="btn-quitar-filtro-activo" class="btn btn-secundario">Ver todas</button>
     </div>
-    <div class="contab-todo-filtros">
-      <label>Mes <select id="contab-mes"></select></label>
-      <input id="contab-buscar" type="search" placeholder="Buscar dentro del mes...">
+    <div class="contab-todo-filtros contab-cuadros">
+      <div class="cuadro-filtro"><span class="cuadro-filtro-tit">Mes</span><select id="contab-mes"></select></div>
+      <div class="cuadro-filtro cuadro-filtro-busqueda"><span class="cuadro-filtro-tit">Búsqueda</span><input id="contab-buscar" type="search" placeholder="Buscar dentro del mes..."></div>
+      <div class="cuadro-filtro"><span class="cuadro-filtro-tit">Estado PUC</span>
+        <select id="contab-puc-estado">
+          <option value="todos">Todos</option>
+          <option value="pendiente">PUC pendiente</option>
+          <option value="asignado">PUC asignado</option>
+        </select>
+      </div>
     </div>
+    <div id="contab-kpis" class="contab-kpis"></div>
     <div id="contab-lista" class="contab-lista"></div>
     <div id="contab-paginacion" class="contab-paginacion" hidden></div>
   </div>
 
   <div id="contab-vista-todo" hidden>
-    <div class="contab-todo-filtros">
-      <label>Mes <select id="contab-todo-mes"></select></label>
-      <input id="contab-todo-buscar" type="search" placeholder="Buscar dentro del mes...">
+    <div class="contab-todo-filtros contab-cuadros">
+      <div class="cuadro-filtro"><span class="cuadro-filtro-tit">Mes</span><select id="contab-todo-mes"></select></div>
+      <div class="cuadro-filtro cuadro-filtro-busqueda"><span class="cuadro-filtro-tit">Búsqueda</span><input id="contab-todo-buscar" type="search" placeholder="Buscar dentro del mes..."></div>
+      <div class="cuadro-filtro"><span class="cuadro-filtro-tit">Estado PUC</span>
+        <select id="contab-todo-puc-estado">
+          <option value="todos">Todos</option>
+          <option value="pendiente">PUC pendiente</option>
+          <option value="asignado">PUC asignado</option>
+        </select>
+      </div>
     </div>
+    <div id="contab-todo-kpis" class="contab-kpis"></div>
     <p id="contab-todo-resumen" class="contab-resumen">Cargando...</p>
     <div class="contab-todo-tabla-wrap">
       <table class="contab-todo-tabla">
@@ -267,6 +297,120 @@
       </table>
     </div>
     <div id="contab-todo-paginacion" class="contab-paginacion" hidden></div>
+  </div>
+</div>
+
+<div id="seccion-exportar" class="seccion-pagina" hidden>
+  <div class="exp-pagina">
+
+    <div class="exp-banner">
+      <div>
+        <h2>📤 Exportar a World Office</h2>
+        <p id="exp-resumen">Cargando...</p>
+      </div>
+      <button type="button" id="btn-exp-refrescar" class="exp-btn-refrescar">⟳ Actualizar</button>
+    </div>
+
+    <div id="exp-kpis" class="exp-kpis"></div>
+
+    <section class="exp-paso">
+      <header><span class="exp-num">1</span><div><h3>¿Qué quieres exportar?</h3><small>Puedes marcar uno o los dos.</small></div></header>
+      <div class="exp-tiles">
+        <label class="exp-tile-wrap">
+          <input type="checkbox" id="exp-chk-docs" class="exp-tile-chk" checked>
+          <span class="exp-tile exp-tile-docs"><span class="exp-tile-icono">🧾</span><b>Documentos</b><small>Líneas de Importacion_ERP</small><span class="exp-tile-check">✓</span></span>
+        </label>
+        <label class="exp-tile-wrap">
+          <input type="checkbox" id="exp-chk-ter" class="exp-tile-chk" checked>
+          <span class="exp-tile exp-tile-ter"><span class="exp-tile-icono">👥</span><b>Terceros</b><small>Proveedores nuevos por crear</small><span class="exp-tile-check">✓</span></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="exp-paso">
+      <header><span class="exp-num">2</span><div><h3>Periodo</h3><small>Solo se marcan como PROCESADO los documentos del periodo elegido; el resto queda pendiente.</small></div></header>
+      <div class="exp-fila">
+        <label class="exp-campo">Mes
+          <select id="exp-mes">
+            <option value="todos">Todos los meses</option>
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </label>
+        <label class="exp-campo">Año
+          <select id="exp-anio"><option value="todos">Todos los años</option></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="exp-paso">
+      <header><span class="exp-num">3</span><div><h3>Ajustes del documento</h3><small>Cómo se numeran y se marcan los documentos en World Office.</small></div></header>
+      <div class="exp-fila">
+        <label class="exp-campo">Prefijo interno
+          <input id="exp-prefijo" type="text" placeholder="Vacío = el de la hoja" autocomplete="off">
+          <small>Si en World Office usan otro prefijo, escríbelo aquí.</small>
+        </label>
+        <label class="exp-campo">N.º inicial de DOCUMENTO INTERNO
+          <input id="exp-numero" type="number" placeholder="Ej: 1001" min="0" autocomplete="off">
+          <small>Sube en 1 solo cuando cambia la factura.</small>
+        </label>
+      </div>
+      <div class="exp-fila">
+        <label class="exp-campo">Forma de pago
+          <select id="exp-forma-modo"><option value="no">Dejar la de cada factura</option><option value="si">Usar una para todas</option></select>
+        </label>
+        <label class="exp-campo" id="exp-forma-wrap" hidden>Forma de pago a usar
+          <input id="exp-forma" type="text" placeholder="Ej: Contado, Crédito" autocomplete="off">
+        </label>
+      </div>
+    </section>
+
+    <section class="exp-final">
+      <p id="exp-filtro-detalle" class="exp-detalle"></p>
+      <button type="button" id="btn-exportar-wo" class="exp-btn-exportar">📤 Exportar WO</button>
+      <span id="exp-estado" class="exp-estado"></span>
+      <p class="exp-nota">Se descargan los Excel y, si todo sale bien, las líneas exportadas quedan como <b>PROCESADO</b>.</p>
+      <button type="button" id="btn-reparar-links" class="exp-btn-secundario" title="Copia a Importacion_ERP los links de PDF y XML que Facturas 2026 ya tiene y que el ERP no recibió">🔧 Reparar links PDF/XML del ERP</button>
+      <div id="exp-resultado" class="exp-resultado" hidden></div>
+    </section>
+
+  </div>
+</div>
+
+<div id="seccion-caja" class="seccion-pagina" hidden>
+  <div class="contab-head">
+    <h2>👛 Caja Menor</h2>
+    <div style="display:flex; gap:8px;">
+      <button type="button" id="btn-abrir-caja" class="btn btn-secundario">➕ Abrir caja</button>
+      <button type="button" id="btn-refrescar-cajas" class="btn btn-secundario">⟳ Actualizar</button>
+    </div>
+  </div>
+  <p id="caja-resumen" class="contab-resumen">Cargando...</p>
+  <p id="caja-mensaje" class="pago-base-hint" hidden></p>
+  <div id="caja-lista" class="caja-lista"></div>
+</div>
+
+<div id="modal-abrir-caja" class="overlay-lote" hidden>
+  <div class="overlay-lote-panel modal-informal-panel">
+    <h3>➕ Abrir caja menor</h3>
+    <form id="form-abrir-caja">
+      <label>Responsable
+        <input type="text" name="responsable" required placeholder="Nombre de quien maneja la caja">
+      </label>
+      <label>Valor a entregar
+        <input type="number" name="valor" step="0.01" min="0.01" required>
+      </label>
+      <label>Observaciones (opcional)
+        <input type="text" name="observaciones" placeholder="Motivo, referencia...">
+      </label>
+      <div class="form-footer">
+        <span id="abrir-caja-mensaje" class="form-mensaje"></span>
+        <button type="submit" class="btn btn-primary">Abrir caja</button>
+      </div>
+    </form>
+    <button type="button" id="btn-cerrar-abrir-caja" class="btn btn-secundario" style="margin-top:8px; width:100%;">Cancelar</button>
   </div>
 </div>
 
@@ -356,7 +500,7 @@
     <div id="estado-vacio" class="estado-vacio" hidden>No hay facturas que coincidan con el filtro.</div>
     <table id="tabla-facturas" class="tabla-facturas" hidden>
       <thead><tr>
-        <th class="col-check"></th>
+        <th class="col-check" title="Marca varias facturas para pagarlas juntas en un solo pago">☑️</th>
         <th class="ordenable" data-campo="item">Item</th>
         <th class="ordenable" data-campo="fechaEmision">Fecha</th>
         <th class="ordenable" data-campo="vendedorNombre">Proveedor</th>
@@ -407,6 +551,18 @@
       </dl>
       <p id="det-retenciones-detalle" class="det-retenciones-detalle"></p>
       <p id="det-concepto" style="font-size:0.8rem; color:var(--text-muted); margin:0 0 8px;"></p>
+
+      <div id="det-nc-aplicada" class="pago-aplicado" hidden>
+        <h3>🔗 Nota crédito aplicada</h3>
+        <dl class="resumen-financiero">
+          <div class="stat stat-base"><dt>Factura</dt><dd id="det-nc-documento"></dd></div>
+          <div class="stat stat-total"><dt>Valor</dt><dd id="det-nc-valor"></dd></div>
+          <div class="stat stat-iva"><dt>Fecha aplicación</dt><dd id="det-nc-fecha"></dd></div>
+        </dl>
+        <div class="pago-acciones">
+          <button type="button" id="btn-ver-factura-nc" class="btn btn-secundario">Ver factura ↗</button>
+        </div>
+      </div>
 
       <div id="det-pago-aplicado" class="pago-aplicado" hidden>
         <h3>Pago aplicado</h3>
@@ -528,7 +684,7 @@
     </div>
 
     <div id="tab-editar" class="tab-panel">
-      <form id="form-editar" autocomplete="off">
+      <div id="form-editar" autocomplete="off">
         <div class="bloque-edit be-doc"><span class="be-titulo">1 · Documento</span>
         <label class="campo-cufe">CUFE (no editable)
           <input type="text" id="edit-cufe" disabled>
@@ -555,7 +711,7 @@
         <label>NIT del proveedor <input type="text" name="vendedorNit" autocomplete="off"></label>
         <label>Ciudad <input type="text" name="vendedorCiudad" autocomplete="off"></label>
         <label>Teléfono <input type="text" name="vendedorTelefono" autocomplete="off"></label>
-        <label>Email <input type="email" name="vendedorEmail" autocomplete="off"></label>
+        <label>Email <input type="text" name="vendedorEmail" autocomplete="off"></label>
         <label>Dirección <input type="text" name="vendedorDireccion" autocomplete="off"></label>
         </div>
         <div class="bloque-edit be-val"><span class="be-titulo">3 · Valores</span>
@@ -574,9 +730,9 @@
         </div>
         <div class="form-footer">
           <span id="editar-mensaje" class="form-mensaje"></span>
-          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+          <button type="button" id="btn-guardar-edicion" class="btn btn-primary">Guardar cambios</button>
         </div>
-      </form>
+      </div>
     </div>
 
     <div id="tab-contabilidad" class="tab-panel">
@@ -616,9 +772,48 @@
     <span id="barra-seleccion-texto"></span>
     <div>
       <button type="button" id="btn-limpiar-seleccion" class="btn btn-secundario">Limpiar</button>
-      <button type="button" id="btn-pagar-seleccionadas" class="btn btn-primary">💳 Pagar seleccionadas</button>
     </div>
   </div>
+
+  <section id="panel-lote" class="panel-lote" hidden>
+    <h3>💳 Pagar varias facturas en un solo pago</h3>
+    <form id="form-pago-lote">
+      <div class="lote-agregar">
+        <input type="search" id="lote-agregar-buscar" placeholder="Agregar otra factura (proveedor, NIT o número)...">
+        <div id="lote-agregar-resultados" class="lote-agregar-resultados" hidden></div>
+      </div>
+      <div id="lote-lineas" class="lote-lineas"></div>
+      <div id="lote-resumen" class="lote-resumen" hidden>
+        <span>Total bruto <b id="lote-resumen-bruto"></b></span>
+        <span>Retenciones <b id="lote-resumen-ret"></b></span>
+        <span>Neto a pagar <b id="lote-resumen-neto"></b></span>
+      </div>
+      <div class="lote-aplicacion">
+        <h4>✅ Aplicación del pago</h4>
+        <label>Fecha del pago
+          <input type="date" name="fechaPago" required>
+        </label>
+        <label>Forma de Pago
+          <select name="formaDePago" required>
+            <option value="">-- Seleccione --</option>
+            <option value="Crédito">Crédito</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Banco Av Villas">Banco Av Villas</option>
+            <option value="Banco Davivienda">Banco Davivienda</option>
+            <option value="TD Av Villas">TD Av Villas</option>
+            <option value="NEQUI_LE">Nequi (L.E)</option>
+          </select>
+        </label>
+        <label>Comprobante (opcional, uno solo para todo el pago)
+          <input type="file" name="comprobante" accept="image/*,application/pdf">
+        </label>
+        <div class="form-footer">
+          <span id="lote-pago-mensaje" class="form-mensaje"></span>
+          <button type="submit" class="btn btn-primary">Guardar pago del lote</button>
+        </div>
+      </div>
+    </form>
+  </section>
   </div>
 </div>
 
@@ -626,6 +821,7 @@
   <p>Desarrollado por <strong>NEXUS CORPORATION BUSINESS SAS</strong> · NIT 901.914.477-0 · info@nexuscbsas.com · <span id="version-app">v2026.09.22-2</span></p>
 </footer>
 
-<script src="app.js?v=2026.09.24-5"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="app.js?v=2026.10.20-5"></script>
 </body>
 </html>
