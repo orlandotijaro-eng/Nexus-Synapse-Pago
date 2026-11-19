@@ -63,7 +63,6 @@ const el = {
   filtroTipoDocumento: document.getElementById('filtro-tipo-documento'),
   btnRefrescar: document.getElementById('btn-refrescar'),
   inputZipDoc: document.getElementById('input-zip-doc'),
-  inputZipMasivo: document.getElementById('input-zip-masivo'),
   chkContabilizarMasivo: document.getElementById('chk-contabilizar-masivo'),
   zipMensaje: document.getElementById('zip-mensaje'),
   overlayLote: document.getElementById('overlay-lote'),
@@ -1450,8 +1449,9 @@ function elegirMesDeCarga(items, incompletos, masivo) {
   const btnSubir = document.getElementById('mes-carga-subir');
   const btnCancelar = document.getElementById('mes-carga-cancelar');
 
-  // Documento sube facturas nuevas (salta las que ya estan); Masivo actualiza existentes (salta las que no estan)
-  const omitible = (it) => (masivo ? !it.enHoja : it.enHoja);
+  // Lo que se puede saltar son las que ya estan en la hoja. En Documento se saltan por defecto (no
+  // duplicar); el Cargue masivo carga nuevas y existentes, asi que ahi saltarlas es opcional.
+  const omitible = (it) => it.enHoja;
   const porMes = new Map();
   items.forEach((it) => { const k = it.mes || 'sin-fecha'; porMes.set(k, (porMes.get(k) || 0) + 1); });
   const meses = [...porMes.keys()].filter((k) => k !== 'sin-fecha').sort().reverse();
@@ -1469,21 +1469,20 @@ function elegirMesDeCarga(items, incompletos, masivo) {
         <span class="mes-chip-nombre">${escapeHtml(nombreMes(k))}</span><span class="mes-chip-n">${n}</span></button>`;
     }).join('');
     chips.querySelectorAll('.mes-chip').forEach((b) => b.addEventListener('click', () => { elegido = b.dataset.mes; pintar(); }));
-    const omitidas = delMes().filter(omitible).length;
-    txtOmitir.textContent = masivo
-      ? `Saltar las que no están en la hoja (${omitidas})`
-      : `Saltar las que ya están en la hoja (${omitidas})`;
+    const yaEnHoja = delMes().filter(omitible).length;
+    const nuevas = delMes().length - yaEnHoja;
+    txtOmitir.textContent = `Saltar las que ya están en la hoja (${yaEnHoja})`;
     const n = aSubir().length;
-    resumen.textContent = `Encontré ${items.length} factura${items.length === 1 ? '' : 's'} en lo que escogiste. ${nombreMes(elegido)}: se van a subir ${n}.`;
+    resumen.textContent = `Encontré ${items.length} factura${items.length === 1 ? '' : 's'} en lo que escogiste. ${nombreMes(elegido)}: ${nuevas} nueva${nuevas === 1 ? '' : 's'} y ${yaEnHoja} ya en la hoja · se van a subir ${n}.`;
     btnSubir.textContent = n ? `Subir ${n} factura${n === 1 ? '' : 's'}` : 'Nada para subir';
     btnSubir.classList.toggle('sin-nada', !n);
   }
 
   avisos.hidden = !incompletos.length;
   avisos.textContent = incompletos.length ? `No se van a subir porque les falta su par: ${incompletos.join(' · ')}` : '';
-  chkOmitir.checked = true;
+  chkOmitir.checked = !masivo;
   chkOmitir.onchange = pintar;
-  document.getElementById('mes-carga-titulo').textContent = masivo ? '¿Qué mes quieres actualizar?' : '¿Qué mes quieres subir?';
+  document.getElementById('mes-carga-titulo').textContent = masivo ? 'Cargue masivo · ¿qué mes quieres cargar?' : '¿Qué mes quieres subir?';
   pintar();
   modal.hidden = false;
 
@@ -1529,8 +1528,7 @@ async function cargarDocumentosElectronicos(archivos, masivo) {
   }
 }
 
-[[el.inputZipDoc, false], [el.inputZipMasivo, true],
- [document.getElementById('input-carpeta-doc'), false], [document.getElementById('input-carpeta-masivo'), true]]
+[[el.inputZipDoc, false], [document.getElementById('input-carpeta-masivo'), true]]
   .forEach(([input, masivo]) => {
     if (!input) return;
     input.addEventListener('change', async (e) => {
