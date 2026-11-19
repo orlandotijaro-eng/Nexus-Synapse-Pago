@@ -1380,20 +1380,73 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante', extra = nul
   setTimeout(() => { el.zipMensaje.hidden = true; }, errores.length ? 15000 : 8000);
 }
 
-el.inputZipDoc.addEventListener('change', async (e) => {
-  const archivos = Array.from(e.target.files || []);
-  e.target.value = '';
-  if (!archivos.length) return;
-  await procesarLoteZip(archivos, URL_CARGAR_DOCUMENTO);
-});
+// PDF + XML sueltos (sin comprimir): se emparejan por nombre (ej. <CUFE>.pdf y <CUFE>.xml) y se
+// arma en el navegador un ZIP <nombre>.zip con los dos, igual al que se subia a mano. Asi el
+// backend no cambia y en el Masivo el nombre del ZIP sigue siendo el CUFE. Los .zip pasan tal cual
+// y cualquier otro archivo (p.ej. al escoger una carpeta) se ignora.
+async function prepararZips(archivos) {
+  const zips = [];
+  const grupos = new Map();
+  for (const a of archivos) {
+    const m = a.name.match(/^(.*)\.(zip|pdf|xml)$/i);
+    if (!m) continue;
+    const ext = m[2].toLowerCase();
+    if (ext === 'zip') { zips.push(a); continue; }
+    const base = m[1].trim();
+    const clave = base.toLowerCase();
+    if (!grupos.has(clave)) grupos.set(clave, { base, pdf: null, xml: null });
+    grupos.get(clave)[ext] = a;
+  }
+  const incompletos = [];
+  if (grupos.size && typeof JSZip === 'undefined') {
+    throw new Error('No se cargó la librería para armar el ZIP. Revisa tu conexión y recarga con Ctrl+F5.');
+  }
+  for (const g of grupos.values()) {
+    if (!g.pdf || !g.xml) { incompletos.push(`${g.base.slice(0, 12)}… (falta el ${g.pdf ? 'XML' : 'PDF'})`); continue; }
+    const zip = new JSZip();
+    zip.file(g.pdf.name, g.pdf);
+    zip.file(g.xml.name, g.xml);
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    zips.push(new File([blob], `${g.base}.zip`, { type: 'application/zip' }));
+  }
+  return { zips, incompletos };
+}
 
-el.inputZipMasivo.addEventListener('change', async (e) => {
-  const archivos = Array.from(e.target.files || []);
-  e.target.value = '';
-  if (!archivos.length) return;
-  const contabilizar = el.chkContabilizarMasivo.checked;
-  await procesarLoteZip(archivos, URL_BACKFILL_MASIVO, 'comprobante', { contabilizar: contabilizar ? 'true' : 'false' });
-});
+async function cargarDocumentosElectronicos(archivos, masivo) {
+  let preparado;
+  try {
+    preparado = await prepararZips(archivos);
+  } catch (err) {
+    mostrarMensajeZip(err.message, 'error');
+    return;
+  }
+  const { zips, incompletos } = preparado;
+  if (!zips.length) {
+    mostrarMensajeZip(incompletos.length
+      ? `No hay facturas completas para subir. Con problema: ${incompletos.join(' · ')}`
+      : 'No se encontraron archivos ZIP, PDF o XML para subir.', 'error');
+    return;
+  }
+  if (incompletos.length && !confirm(`Estas facturas no tienen su PDF y su XML juntos y no se van a subir:\n\n${incompletos.join('\n')}\n\n¿Subir las otras ${zips.length}?`)) return;
+  if (masivo) {
+    const contabilizar = el.chkContabilizarMasivo.checked;
+    await procesarLoteZip(zips, URL_BACKFILL_MASIVO, 'comprobante', { contabilizar: contabilizar ? 'true' : 'false' });
+  } else {
+    await procesarLoteZip(zips, URL_CARGAR_DOCUMENTO);
+  }
+}
+
+[[el.inputZipDoc, false], [el.inputZipMasivo, true],
+ [document.getElementById('input-carpeta-doc'), false], [document.getElementById('input-carpeta-masivo'), true]]
+  .forEach(([input, masivo]) => {
+    if (!input) return;
+    input.addEventListener('change', async (e) => {
+      const archivos = Array.from(e.target.files || []);
+      e.target.value = '';
+      if (!archivos.length) return;
+      await cargarDocumentosElectronicos(archivos, masivo);
+    });
+  });
 
 el.inputInformalIa.addEventListener('change', async (e) => {
   const archivos = Array.from(e.target.files || []);

@@ -1393,6 +1393,15 @@ details.abono-det { border: 1px solid color-mix(in srgb, var(--oc-cian) 35%, var
 details.abono-det > summary::before { color: var(--oc-cian); }
 details.abono-det[open] { background: color-mix(in srgb, var(--oc-cian) 6%, var(--card-bg)); }
 
+/* Cargue por carpeta (PDF + XML o ZIP, aunque estén en subcarpetas) */
+.carga-carpetas { display: flex; gap: 8px; flex-wrap: wrap; }
+.carga-carpeta {
+  display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,0.92); color: var(--oc-marino); font-size: 0.74rem; font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+.carga-carpeta:hover { background: #fff; transform: translateY(-1px); }
+
 /* Hoja completa: botón Exportar a Excel (verde de Excel con el turquesa del tema) */
 .btn-exportar-excel {
   margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 6px;
