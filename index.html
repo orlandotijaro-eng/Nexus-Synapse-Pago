@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2026.11.19-1">
+<link rel="stylesheet" href="style.css?v=2026.11.19-2">
 </head>
 <body>
 <div id="pantalla-login" hidden>
@@ -30,7 +30,7 @@
         <span id="login-mensaje" class="form-mensaje"></span>
         <button type="submit" class="btn btn-primary">Ingresar</button>
       </form>
-      <p class="login-version" id="login-version">v174</p>
+      <p class="login-version" id="login-version">v175</p>
     </div>
   </div>
 </div>
@@ -57,7 +57,7 @@
         <span class="sesion-datos"><small>Usuario</small><span id="sesion-nombre"></span></span>
         <button type="button" id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión">⎋ Salir</button>
       </div>
-      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v174</span>
+      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v175</span>
     </div>
   </div>
 </header>
@@ -93,13 +93,15 @@
           <input type="file" id="input-zip-masivo" accept=".zip,.pdf,.xml" multiple hidden>
         </label>
       </div>
-      <div class="carga-carpetas">
-        <label class="carga-carpeta" title="Escoge la carpeta que contiene las facturas (ZIP, o PDF + XML, aunque estén en subcarpetas)">
-          📁 Carpeta → Documento
+      <div class="carga-fichas carga-fichas-carpeta">
+        <label class="carga-ficha carga-ficha-carpeta" title="Escoge la carpeta que contiene las facturas (ZIP, o PDF + XML, aunque estén en subcarpetas)">
+          <span class="carga-ficha-icono">📁</span>
+          <span class="carga-ficha-txt"><b>Carpeta · Documento</b><small>Incluye subcarpetas</small></span>
           <input type="file" id="input-carpeta-doc" webkitdirectory multiple hidden>
         </label>
-        <label class="carga-carpeta" title="Escoge la carpeta que contiene las facturas ya existentes, nombradas con el CUFE (aunque estén en subcarpetas)">
-          📁 Carpeta → Masivo
+        <label class="carga-ficha carga-ficha-carpeta" title="Escoge la carpeta que contiene las facturas ya existentes, nombradas con el CUFE (aunque estén en subcarpetas)">
+          <span class="carga-ficha-icono">📂</span>
+          <span class="carga-ficha-txt"><b>Carpeta · Masivo</b><small>Incluye subcarpetas</small></span>
           <input type="file" id="input-carpeta-masivo" webkitdirectory multiple hidden>
         </label>
       </div>
@@ -837,6 +839,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="app.js?v=2026.11.19-1"></script>
+<script src="app.js?v=2026.11.19-2"></script>
 </body>
 </html>

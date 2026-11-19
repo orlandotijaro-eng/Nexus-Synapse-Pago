@@ -1393,14 +1393,13 @@ details.abono-det { border: 1px solid color-mix(in srgb, var(--oc-cian) 35%, var
 details.abono-det > summary::before { color: var(--oc-cian); }
 details.abono-det[open] { background: color-mix(in srgb, var(--oc-cian) 6%, var(--card-bg)); }
 
-/* Cargue por carpeta (PDF + XML o ZIP, aunque estén en subcarpetas) */
-.carga-carpetas { display: flex; gap: 8px; flex-wrap: wrap; }
-.carga-carpeta {
-  display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 999px; cursor: pointer;
-  background: rgba(255,255,255,0.92); color: var(--oc-marino); font-size: 0.74rem; font-weight: 800;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
-}
-.carga-carpeta:hover { background: #fff; transform: translateY(-1px); }
+/* Cargue por carpeta: mismas fichas que Documento y Masivo; el borde izquierdo azul indica
+   que reciben una carpeta completa (con subcarpetas) en vez de archivos sueltos */
+.carga-ficha-carpeta { border-left-color: var(--oc-azul); }
+/* Fichas de cargue: alto mínimo de clic, transición solo de lo que se mueve y hundimiento al presionar */
+.carga-ficha { min-height: 40px; transition-property: transform, box-shadow; transition-duration: 0.12s; }
+.carga-ficha:active { transform: scale(0.97); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+@media (prefers-reduced-motion: reduce) { .carga-ficha:hover, .carga-ficha:active { transform: none; } }
 
 /* Hoja completa: botón Exportar a Excel (verde de Excel con el turquesa del tema) */
 .btn-exportar-excel {
