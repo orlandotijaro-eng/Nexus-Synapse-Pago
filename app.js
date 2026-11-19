@@ -1450,9 +1450,13 @@ function elegirMesDeCarga(items, incompletos, masivo) {
   const btnSubir = document.getElementById('mes-carga-subir');
   const btnCancelar = document.getElementById('mes-carga-cancelar');
 
-  // Lo que se puede saltar son las que ya estan en la hoja. En Documento se saltan por defecto (no
-  // duplicar); el Cargue masivo carga nuevas y existentes, asi que ahi saltarlas es opcional.
-  const omitible = (it) => it.enHoja;
+  // Documento crea facturas nuevas: se salta todo lo que ya este en la hoja (no duplicar, marcado por
+  // defecto). El masivo carga nuevas y existentes y completa lo que falte: solo se pueden saltar las
+  // que ya estan completas (CUFE en la hoja + PDF y XML archivados + contabilizada, si esta marcado
+  // "Contabilizar tambien"); las que no tienen anexos o no estan contabilizadas siempre van.
+  const pideContab = () => masivo && el.chkContabilizarMasivo.checked;
+  const completa = (it) => it.enHoja && it.conAnexos && (it.contabilizada || !pideContab());
+  const omitible = (it) => (masivo ? completa(it) : it.enHoja);
   const porMes = new Map();
   items.forEach((it) => { const k = it.mes || 'sin-fecha'; porMes.set(k, (porMes.get(k) || 0) + 1); });
   const meses = [...porMes.keys()].filter((k) => k !== 'sin-fecha').sort().reverse();
@@ -1470,11 +1474,22 @@ function elegirMesDeCarga(items, incompletos, masivo) {
         <span class="mes-chip-nombre">${escapeHtml(nombreMes(k))}</span><span class="mes-chip-n">${n}</span></button>`;
     }).join('');
     chips.querySelectorAll('.mes-chip').forEach((b) => b.addEventListener('click', () => { elegido = b.dataset.mes; pintar(); }));
-    const yaEnHoja = delMes().filter(omitible).length;
-    const nuevas = delMes().length - yaEnHoja;
-    txtOmitir.textContent = `Saltar las que ya están en la hoja (${yaEnHoja})`;
+    const mesItems = delMes();
+    const nuevas = mesItems.filter((it) => !it.enHoja).length;
+    const sinAnexos = mesItems.filter((it) => it.enHoja && !it.conAnexos).length;
+    const sinContab = mesItems.filter((it) => it.enHoja && it.conAnexos && !it.contabilizada && pideContab()).length;
+    const completas = mesItems.filter(completa).length;
+    const saltables = mesItems.filter(omitible).length;
+    txtOmitir.textContent = masivo
+      ? `Saltar las que ya están completas: anexos${pideContab() ? ' y contabilizadas' : ''} (${saltables})`
+      : `Saltar las que ya están en la hoja (${saltables})`;
     const n = aSubir().length;
-    resumen.textContent = `Encontré ${items.length} factura${items.length === 1 ? '' : 's'} en lo que escogiste. ${nombreMes(elegido)}: ${nuevas} nueva${nuevas === 1 ? '' : 's'} y ${yaEnHoja} ya en la hoja · se van a subir ${n}.`;
+    const plural = (k, s, p) => `${k} ${k === 1 ? s : p}`;
+    resumen.textContent = `Encontré ${plural(items.length, 'factura', 'facturas')} en lo que escogiste. ${nombreMes(elegido)}: `
+      + (masivo
+        ? `${plural(nuevas, 'nueva', 'nuevas')} · ${sinAnexos} sin anexos${pideContab() ? ` · ${sinContab} sin contabilizar` : ''} · ${plural(completas, 'completa', 'completas')}`
+        : `${plural(nuevas, 'nueva', 'nuevas')} · ${mesItems.length - nuevas} ya en la hoja`)
+      + ` — se van a subir ${n}.`;
     btnSubir.textContent = n ? `Subir ${n} factura${n === 1 ? '' : 's'}` : 'Nada para subir';
     btnSubir.classList.toggle('sin-nada', !n);
   }
@@ -1483,6 +1498,12 @@ function elegirMesDeCarga(items, incompletos, masivo) {
   avisos.textContent = incompletos.length ? `No se van a subir porque les falta su par: ${incompletos.join(' · ')}` : '';
   chkOmitir.checked = !masivo;
   chkOmitir.onchange = pintar;
+  // Copia de "Contabilizar también" dentro de la ventana (la de la barra queda tapada): van sincronizadas
+  // y al cambiarla se recalcula que cuenta como completa
+  const chkContab = document.getElementById('mes-carga-contab');
+  document.getElementById('mes-carga-contab-wrap').hidden = !masivo;
+  chkContab.checked = el.chkContabilizarMasivo.checked;
+  chkContab.onchange = () => { el.chkContabilizarMasivo.checked = chkContab.checked; pintar(); };
   document.getElementById('mes-carga-titulo').textContent = masivo ? 'Masivo (PDF + XML) · ¿qué mes quieres cargar?' : '¿Qué mes quieres subir?';
   pintar();
   modal.hidden = false;
@@ -1509,11 +1530,15 @@ async function cargarDocumentosElectronicos(archivos, masivo) {
     return;
   }
   mostrarMensajeZip(`Leyendo la fecha de ${items.length} factura${items.length === 1 ? '' : 's'}...`, '');
-  const enHoja = new Set((state.facturas || []).map((f) => String(f.cufe || '').trim().toLowerCase()).filter(Boolean));
+  // CUFE -> factura de la hoja, para saber si ya esta y si ya tiene sus anexos (PDF y XML en Drive)
+  const enHoja = new Map((state.facturas || []).map((f) => [String(f.cufe || '').trim().toLowerCase(), f]).filter(([k]) => k));
   await Promise.all(items.map(async (it) => {
     const fecha = await leerFechaDocumento(it);
     it.mes = fecha ? fecha.slice(0, 7) : null;
-    it.enHoja = enHoja.has(it.base.toLowerCase());
+    const f = enHoja.get(it.base.toLowerCase());
+    it.enHoja = !!f;
+    it.conAnexos = !!(f && f.drivePdf && f.driveXml);
+    it.contabilizada = !!(f && f.contabilizado);
   }));
   el.zipMensaje.hidden = true;
 

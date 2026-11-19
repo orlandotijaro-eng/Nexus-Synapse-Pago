@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2026.11.19-5">
+<link rel="stylesheet" href="style.css?v=2026.11.19-6">
 </head>
 <body>
 <div id="pantalla-login" hidden>
@@ -30,7 +30,7 @@
         <span id="login-mensaje" class="form-mensaje"></span>
         <button type="submit" class="btn btn-primary">Ingresar</button>
       </form>
-      <p class="login-version" id="login-version">v178</p>
+      <p class="login-version" id="login-version">v179</p>
     </div>
   </div>
 </div>
@@ -57,7 +57,7 @@
         <span class="sesion-datos"><small>Usuario</small><span id="sesion-nombre"></span></span>
         <button type="button" id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión">⎋ Salir</button>
       </div>
-      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v178</span>
+      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v179</span>
     </div>
   </div>
 </header>
@@ -181,6 +181,7 @@
     <h3 id="mes-carga-titulo">¿Qué mes quieres subir?</h3>
     <p id="mes-carga-resumen" class="mes-carga-resumen"></p>
     <div id="mes-carga-meses" class="mes-carga-meses"></div>
+    <label class="mes-carga-omitir mes-carga-contab" id="mes-carga-contab-wrap" hidden><input type="checkbox" id="mes-carga-contab" checked> <span>Contabilizar también</span></label>
     <label class="mes-carga-omitir"><input type="checkbox" id="mes-carga-omitir" checked> <span id="mes-carga-omitir-txt">Saltar las que ya están en la hoja</span></label>
     <p id="mes-carga-avisos" class="mes-carga-avisos" hidden></p>
     <div class="overlay-lote-acciones">
@@ -846,6 +847,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="app.js?v=2026.11.19-5"></script>
+<script src="app.js?v=2026.11.19-6"></script>
 </body>
 </html>

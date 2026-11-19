@@ -1430,6 +1430,10 @@ details.abono-det[open] { background: color-mix(in srgb, var(--oc-cian) 6%, var(
   font-size: 0.82rem; font-weight: 700; color: var(--text); cursor: pointer;
 }
 .mes-carga-omitir input { width: 16px; height: 16px; accent-color: var(--oc-turquesa); }
+.mes-carga-omitir + .mes-carga-omitir { margin-top: 8px; }
+.mes-carga-contab { background: color-mix(in srgb, var(--contab) 10%, var(--card-bg)); border-left-color: var(--contab); }
+.mes-carga-contab input { accent-color: var(--contab); }
+.mes-carga-contab[hidden] { display: none; }
 .mes-carga-avisos {
   margin: 10px 22px 0; padding: 8px 12px; border-radius: 10px; font-size: 0.76rem; color: var(--text);
   background: color-mix(in srgb, var(--oc-naranja) 12%, var(--card-bg)); border-left: 4px solid var(--oc-naranja);
