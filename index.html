@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2026.11.19-2">
+<link rel="stylesheet" href="style.css?v=2026.11.19-3">
 </head>
 <body>
 <div id="pantalla-login" hidden>
@@ -30,7 +30,7 @@
         <span id="login-mensaje" class="form-mensaje"></span>
         <button type="submit" class="btn btn-primary">Ingresar</button>
       </form>
-      <p class="login-version" id="login-version">v175</p>
+      <p class="login-version" id="login-version">v176</p>
     </div>
   </div>
 </div>
@@ -57,7 +57,7 @@
         <span class="sesion-datos"><small>Usuario</small><span id="sesion-nombre"></span></span>
         <button type="button" id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión">⎋ Salir</button>
       </div>
-      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v175</span>
+      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v176</span>
     </div>
   </div>
 </header>
@@ -94,14 +94,14 @@
         </label>
       </div>
       <div class="carga-fichas carga-fichas-carpeta">
-        <label class="carga-ficha carga-ficha-carpeta" title="Escoge la carpeta que contiene las facturas (ZIP, o PDF + XML, aunque estén en subcarpetas)">
+        <label class="carga-ficha carga-ficha-carpeta" title="Escoge la carpeta donde descargas las facturas (PDF + XML o ZIP); luego eliges qué mes subir">
           <span class="carga-ficha-icono">📁</span>
-          <span class="carga-ficha-txt"><b>Carpeta · Documento</b><small>Incluye subcarpetas</small></span>
+          <span class="carga-ficha-txt"><b>Carpeta · Documento</b><small>Toda la carpeta · eliges el mes</small></span>
           <input type="file" id="input-carpeta-doc" webkitdirectory multiple hidden>
         </label>
-        <label class="carga-ficha carga-ficha-carpeta" title="Escoge la carpeta que contiene las facturas ya existentes, nombradas con el CUFE (aunque estén en subcarpetas)">
+        <label class="carga-ficha carga-ficha-carpeta" title="Escoge la carpeta donde descargas las facturas ya existentes, nombradas con el CUFE; luego eliges qué mes actualizar">
           <span class="carga-ficha-icono">📂</span>
-          <span class="carga-ficha-txt"><b>Carpeta · Masivo</b><small>Incluye subcarpetas</small></span>
+          <span class="carga-ficha-txt"><b>Carpeta · Masivo</b><small>Toda la carpeta · eliges el mes</small></span>
           <input type="file" id="input-carpeta-masivo" webkitdirectory multiple hidden>
         </label>
       </div>
@@ -182,6 +182,20 @@
     <span id="filtros-resultado" class="filtros-resultado"></span>
   </footer>
 </aside>
+
+<div id="modal-mes-carga" class="overlay-lote" hidden>
+  <div class="overlay-lote-panel modal-mes-panel" role="dialog" aria-modal="true" aria-labelledby="mes-carga-titulo">
+    <h3 id="mes-carga-titulo">¿Qué mes quieres subir?</h3>
+    <p id="mes-carga-resumen" class="mes-carga-resumen"></p>
+    <div id="mes-carga-meses" class="mes-carga-meses"></div>
+    <label class="mes-carga-omitir"><input type="checkbox" id="mes-carga-omitir" checked> <span id="mes-carga-omitir-txt">Saltar las que ya están en la hoja</span></label>
+    <p id="mes-carga-avisos" class="mes-carga-avisos" hidden></p>
+    <div class="overlay-lote-acciones">
+      <button type="button" id="mes-carga-cancelar" class="btn btn-secundario">Cancelar</button>
+      <button type="button" id="mes-carga-subir" class="btn btn-primary">Subir</button>
+    </div>
+  </div>
+</div>
 
 <div id="modal-informal" class="overlay-lote" hidden>
   <div class="overlay-lote-panel modal-informal-panel">
@@ -839,6 +853,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="app.js?v=2026.11.19-2"></script>
+<script src="app.js?v=2026.11.19-3"></script>
 </body>
 </html>

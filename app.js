@@ -1384,50 +1384,143 @@ async function procesarLoteZip(archivos, url, campo = 'comprobante', extra = nul
 // arma en el navegador un ZIP <nombre>.zip con los dos, igual al que se subia a mano. Asi el
 // backend no cambia y en el Masivo el nombre del ZIP sigue siendo el CUFE. Los .zip pasan tal cual
 // y cualquier otro archivo (p.ej. al escoger una carpeta) se ignora.
-async function prepararZips(archivos) {
-  const zips = [];
+// Antes de subir se lee la fecha de emision de cada XML para dejar escoger el mes y se marca cuales
+// ya estan en la hoja (por CUFE = nombre del archivo), porque la carpeta de descargas acumula todo.
+function agruparDocumentos(archivos) {
   const grupos = new Map();
   for (const a of archivos) {
     const m = a.name.match(/^(.*)\.(zip|pdf|xml)$/i);
     if (!m) continue;
     const ext = m[2].toLowerCase();
-    if (ext === 'zip') { zips.push(a); continue; }
     const base = m[1].trim();
     const clave = base.toLowerCase();
-    if (!grupos.has(clave)) grupos.set(clave, { base, pdf: null, xml: null });
+    if (!grupos.has(clave)) grupos.set(clave, { base, pdf: null, xml: null, zip: null });
     grupos.get(clave)[ext] = a;
   }
+  const items = [];
   const incompletos = [];
-  if (grupos.size && typeof JSZip === 'undefined') {
-    throw new Error('No se cargó la librería para armar el ZIP. Revisa tu conexión y recarga con Ctrl+F5.');
-  }
   for (const g of grupos.values()) {
-    if (!g.pdf || !g.xml) { incompletos.push(`${g.base.slice(0, 12)}… (falta el ${g.pdf ? 'XML' : 'PDF'})`); continue; }
-    const zip = new JSZip();
-    zip.file(g.pdf.name, g.pdf);
-    zip.file(g.xml.name, g.xml);
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-    zips.push(new File([blob], `${g.base}.zip`, { type: 'application/zip' }));
+    if (g.zip) items.push({ base: g.base, zip: g.zip });
+    else if (g.pdf && g.xml) items.push({ base: g.base, pdf: g.pdf, xml: g.xml });
+    else incompletos.push(`${g.base.slice(0, 12)}… (falta el ${g.pdf ? 'XML' : 'PDF'})`);
   }
-  return { zips, incompletos };
+  return { items, incompletos };
+}
+
+// Fecha de emision (YYYY-MM-DD) del XML de la DIAN. El AttachedDocument trae la factura embebida
+// (a veces escapada con &lt;...&gt;): se prefiere la IssueDate de la factura sobre la del contenedor.
+function fechaEmisionDeXml(texto) {
+  const re = /(?:<|&lt;)cbc:IssueDate(?:>|&gt;)\s*(\d{4}-\d{2}-\d{2})/g;
+  const fechas = [...texto.matchAll(re)].map((m) => ({ fecha: m[1], pos: m.index }));
+  if (!fechas.length) return null;
+  const inicioFactura = texto.search(/(?:<|&lt;)(?:\w+:)?(?:Invoice|CreditNote|DebitNote)[\s>&]/);
+  const deFactura = inicioFactura >= 0 ? fechas.find((f) => f.pos > inicioFactura) : null;
+  return (deFactura || fechas[0]).fecha;
+}
+
+async function leerFechaDocumento(item) {
+  try {
+    if (item.xml) return fechaEmisionDeXml(await item.xml.text());
+    if (item.zip && typeof JSZip !== 'undefined') {
+      const z = await JSZip.loadAsync(item.zip);
+      const xml = Object.values(z.files).find((f) => !f.dir && /\.xml$/i.test(f.name));
+      return xml ? fechaEmisionDeXml(await xml.async('string')) : null;
+    }
+  } catch (e) { console.warn('No se pudo leer la fecha de', item.base, e); }
+  return null;
+}
+
+async function armarZip(item) {
+  if (item.zip) return item.zip;
+  const zip = new JSZip();
+  zip.file(item.pdf.name, item.pdf);
+  zip.file(item.xml.name, item.xml);
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  return new File([blob], `${item.base}.zip`, { type: 'application/zip' });
+}
+
+// Ventana "¿Qué mes quieres subir?": devuelve los items escogidos, o null si se cancela.
+function elegirMesDeCarga(items, incompletos, masivo) {
+  const modal = document.getElementById('modal-mes-carga');
+  const chips = document.getElementById('mes-carga-meses');
+  const resumen = document.getElementById('mes-carga-resumen');
+  const chkOmitir = document.getElementById('mes-carga-omitir');
+  const txtOmitir = document.getElementById('mes-carga-omitir-txt');
+  const avisos = document.getElementById('mes-carga-avisos');
+  const btnSubir = document.getElementById('mes-carga-subir');
+  const btnCancelar = document.getElementById('mes-carga-cancelar');
+
+  // Documento sube facturas nuevas (salta las que ya estan); Masivo actualiza existentes (salta las que no estan)
+  const omitible = (it) => (masivo ? !it.enHoja : it.enHoja);
+  const porMes = new Map();
+  items.forEach((it) => { const k = it.mes || 'sin-fecha'; porMes.set(k, (porMes.get(k) || 0) + 1); });
+  const meses = [...porMes.keys()].filter((k) => k !== 'sin-fecha').sort().reverse();
+  if (porMes.has('sin-fecha')) meses.push('sin-fecha');
+  let elegido = meses[0] || 'todos';
+
+  const nombreMes = (k) => (k === 'todos' ? 'Todos los meses' : k === 'sin-fecha' ? 'Sin fecha' : etiquetaMes(k));
+  const delMes = () => items.filter((it) => elegido === 'todos' || (it.mes || 'sin-fecha') === elegido);
+  const aSubir = () => delMes().filter((it) => !(chkOmitir.checked && omitible(it)));
+
+  function pintar() {
+    chips.innerHTML = ['todos', ...meses].map((k) => {
+      const n = k === 'todos' ? items.length : porMes.get(k);
+      return `<button type="button" class="mes-chip${k === elegido ? ' activo' : ''}" data-mes="${k}" aria-pressed="${k === elegido}">
+        <span class="mes-chip-nombre">${escapeHtml(nombreMes(k))}</span><span class="mes-chip-n">${n}</span></button>`;
+    }).join('');
+    chips.querySelectorAll('.mes-chip').forEach((b) => b.addEventListener('click', () => { elegido = b.dataset.mes; pintar(); }));
+    const omitidas = delMes().filter(omitible).length;
+    txtOmitir.textContent = masivo
+      ? `Saltar las que no están en la hoja (${omitidas})`
+      : `Saltar las que ya están en la hoja (${omitidas})`;
+    const n = aSubir().length;
+    resumen.textContent = `Encontré ${items.length} factura${items.length === 1 ? '' : 's'} en lo que escogiste. ${nombreMes(elegido)}: se van a subir ${n}.`;
+    btnSubir.textContent = n ? `Subir ${n} factura${n === 1 ? '' : 's'}` : 'Nada para subir';
+    btnSubir.classList.toggle('sin-nada', !n);
+  }
+
+  avisos.hidden = !incompletos.length;
+  avisos.textContent = incompletos.length ? `No se van a subir porque les falta su par: ${incompletos.join(' · ')}` : '';
+  chkOmitir.checked = true;
+  chkOmitir.onchange = pintar;
+  document.getElementById('mes-carga-titulo').textContent = masivo ? '¿Qué mes quieres actualizar?' : '¿Qué mes quieres subir?';
+  pintar();
+  modal.hidden = false;
+
+  return new Promise((resolve) => {
+    const cerrar = (valor) => { modal.hidden = true; btnSubir.onclick = null; btnCancelar.onclick = null; document.removeEventListener('keydown', esc); resolve(valor); };
+    const esc = (e) => { if (e.key === 'Escape') cerrar(null); };
+    document.addEventListener('keydown', esc);
+    btnCancelar.onclick = () => cerrar(null);
+    btnSubir.onclick = () => { const lista = aSubir(); if (lista.length) cerrar(lista); };
+  });
 }
 
 async function cargarDocumentosElectronicos(archivos, masivo) {
-  let preparado;
-  try {
-    preparado = await prepararZips(archivos);
-  } catch (err) {
-    mostrarMensajeZip(err.message, 'error');
-    return;
-  }
-  const { zips, incompletos } = preparado;
-  if (!zips.length) {
+  const { items, incompletos } = agruparDocumentos(archivos);
+  if (!items.length) {
     mostrarMensajeZip(incompletos.length
       ? `No hay facturas completas para subir. Con problema: ${incompletos.join(' · ')}`
       : 'No se encontraron archivos ZIP, PDF o XML para subir.', 'error');
     return;
   }
-  if (incompletos.length && !confirm(`Estas facturas no tienen su PDF y su XML juntos y no se van a subir:\n\n${incompletos.join('\n')}\n\n¿Subir las otras ${zips.length}?`)) return;
+  if (typeof JSZip === 'undefined' && items.some((it) => !it.zip)) {
+    mostrarMensajeZip('No se cargó la librería para armar el ZIP. Revisa tu conexión y recarga con Ctrl+F5.', 'error');
+    return;
+  }
+  mostrarMensajeZip(`Leyendo la fecha de ${items.length} factura${items.length === 1 ? '' : 's'}...`, '');
+  const enHoja = new Set((state.facturas || []).map((f) => String(f.cufe || '').trim().toLowerCase()).filter(Boolean));
+  await Promise.all(items.map(async (it) => {
+    const fecha = await leerFechaDocumento(it);
+    it.mes = fecha ? fecha.slice(0, 7) : null;
+    it.enHoja = enHoja.has(it.base.toLowerCase());
+  }));
+  el.zipMensaje.hidden = true;
+
+  const elegidos = await elegirMesDeCarga(items, incompletos, masivo);
+  if (!elegidos) return;
+  const zips = [];
+  for (const it of elegidos) zips.push(await armarZip(it));
   if (masivo) {
     const contabilizar = el.chkContabilizarMasivo.checked;
     await procesarLoteZip(zips, URL_BACKFILL_MASIVO, 'comprobante', { contabilizar: contabilizar ? 'true' : 'false' });
