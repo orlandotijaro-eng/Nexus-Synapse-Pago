@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2026.11.19-4">
+<link rel="stylesheet" href="style.css?v=2026.11.19-5">
 </head>
 <body>
 <div id="pantalla-login" hidden>
@@ -30,7 +30,7 @@
         <span id="login-mensaje" class="form-mensaje"></span>
         <button type="submit" class="btn btn-primary">Ingresar</button>
       </form>
-      <p class="login-version" id="login-version">v177</p>
+      <p class="login-version" id="login-version">v178</p>
     </div>
   </div>
 </div>
@@ -57,7 +57,7 @@
         <span class="sesion-datos"><small>Usuario</small><span id="sesion-nombre"></span></span>
         <button type="button" id="btn-cerrar-sesion" class="btn-cerrar-sesion" title="Cerrar sesión">⎋ Salir</button>
       </div>
-      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v177</span>
+      <span id="version-badge" class="version-badge" title="Número de versión publicada — verifica que coincida con lo que Claude te indique">v178</span>
     </div>
   </div>
 </header>
@@ -87,9 +87,14 @@
           <span class="carga-ficha-txt"><b>Documento</b><small>ZIP, o PDF + XML con el mismo nombre</small></span>
           <input type="file" id="input-zip-doc" accept=".zip,.pdf,.xml" multiple hidden>
         </label>
-        <label class="carga-ficha carga-ficha-carpeta" title="Escoge tu carpeta de descargas (PDF + XML nombrados con el CUFE, o ZIP); eliges el mes y se cargan todas, nuevas o ya existentes">
+        <label class="carga-ficha" title="Para ZIPs cuyo nombre de archivo es el CUFE de una factura ya existente en la hoja">
+          <span class="carga-ficha-icono">🗂️</span>
+          <span class="carga-ficha-txt"><b>Masivo (ZIP = CUFE)</b><small>ZIP nombrado con el CUFE · pausa cada 5</small></span>
+          <input type="file" id="input-zip-masivo" accept=".zip" multiple hidden>
+        </label>
+        <label class="carga-ficha carga-ficha-carpeta" title="Escoge tu carpeta de descargas con los PDF + XML sin comprimir, nombrados con el CUFE; eliges el mes y se cargan todas, nuevas o ya existentes">
           <span class="carga-ficha-icono">📂</span>
-          <span class="carga-ficha-txt"><b>Cargue masivo</b><small>Toda la carpeta · eliges el mes · pausa cada 5</small></span>
+          <span class="carga-ficha-txt"><b>Masivo (PDF + XML)</b><small>Carpeta sin comprimir · eliges el mes</small></span>
           <input type="file" id="input-carpeta-masivo" webkitdirectory multiple hidden>
         </label>
       </div>
@@ -841,6 +846,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="app.js?v=2026.11.19-4"></script>
+<script src="app.js?v=2026.11.19-5"></script>
 </body>
 </html>

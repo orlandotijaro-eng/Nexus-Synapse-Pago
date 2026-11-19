@@ -63,6 +63,7 @@ const el = {
   filtroTipoDocumento: document.getElementById('filtro-tipo-documento'),
   btnRefrescar: document.getElementById('btn-refrescar'),
   inputZipDoc: document.getElementById('input-zip-doc'),
+  inputZipMasivo: document.getElementById('input-zip-masivo'),
   chkContabilizarMasivo: document.getElementById('chk-contabilizar-masivo'),
   zipMensaje: document.getElementById('zip-mensaje'),
   overlayLote: document.getElementById('overlay-lote'),
@@ -1482,7 +1483,7 @@ function elegirMesDeCarga(items, incompletos, masivo) {
   avisos.textContent = incompletos.length ? `No se van a subir porque les falta su par: ${incompletos.join(' · ')}` : '';
   chkOmitir.checked = !masivo;
   chkOmitir.onchange = pintar;
-  document.getElementById('mes-carga-titulo').textContent = masivo ? 'Cargue masivo · ¿qué mes quieres cargar?' : '¿Qué mes quieres subir?';
+  document.getElementById('mes-carga-titulo').textContent = masivo ? 'Masivo (PDF + XML) · ¿qué mes quieres cargar?' : '¿Qué mes quieres subir?';
   pintar();
   modal.hidden = false;
 
@@ -1527,6 +1528,15 @@ async function cargarDocumentosElectronicos(archivos, masivo) {
     await procesarLoteZip(zips, URL_CARGAR_DOCUMENTO);
   }
 }
+
+// Masivo (ZIP = CUFE): el cargue masivo de siempre, los ZIP se suben tal cual y sin ventana de mes
+el.inputZipMasivo.addEventListener('change', async (e) => {
+  const archivos = Array.from(e.target.files || []);
+  e.target.value = '';
+  if (!archivos.length) return;
+  const contabilizar = el.chkContabilizarMasivo.checked;
+  await procesarLoteZip(archivos, URL_BACKFILL_MASIVO, 'comprobante', { contabilizar: contabilizar ? 'true' : 'false' });
+});
 
 [[el.inputZipDoc, false], [document.getElementById('input-carpeta-masivo'), true]]
   .forEach(([input, masivo]) => {
